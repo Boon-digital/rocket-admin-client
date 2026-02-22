@@ -6,7 +6,7 @@ import { Toaster } from 'sonner'
 
 import appCss from '../styles/main.css?url'
 import AppSidebar from '../components/Sidebar'
-import { appBranding } from '@/app.config'
+import { appBranding } from '@boon-digital/rocket-admin-config/appConfig'
 import ThemeProvider from '@/components/ThemeProvider'
 import { SidebarProvider } from '@/components/ui/sidebar'
 

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getEnabledEntities } from '@boon-digital/rocket-admin-config/registry'
 import { iconMap } from '@boon-digital/rocket-admin-config/iconMap'
-import { appBranding } from '@/app.config'
+import { appBranding } from '@boon-digital/rocket-admin-config/appConfig'
 
 // Generate menu items from Entity Registry
 const menuItems = getEnabledEntities().map((entity) => ({
