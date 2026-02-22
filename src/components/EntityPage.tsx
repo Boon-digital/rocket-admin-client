@@ -49,7 +49,8 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
     enabled: !!id && !isCreateMode && !cachedItem,
   })
 
-  const selectedItem = (cachedItem ?? fetchedItem ?? null) as T | null
+  const rawItem = (cachedItem ?? fetchedItem ?? null) as T | null
+  const selectedItem = rawItem ? { ...rawItem, _entityKey: entityKey } as T : null
   const isPanelOpen = !!id || isCreateMode
 
   const handleRowClick = (item: T) => {
