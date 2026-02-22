@@ -13,6 +13,7 @@ import { TagInputField } from './TagInputField'
 import { FileUploadField } from './FileUploadField'
 import { DependentSelectField } from './DependentSelectField'
 import { MultiSearchReferenceField } from './MultiSearchReferenceField'
+import { PasswordField } from './PasswordField'
 
 export function FieldRenderer(props: FieldRendererProps) {
   const { field } = props
@@ -69,6 +70,9 @@ export function FieldRenderer(props: FieldRendererProps) {
 
     case 'dependent-select':
       return <DependentSelectField {...props} />
+
+    case 'password':
+      return <PasswordField {...props} />
 
     case 'nested':
       // TODO: Implement nested object rendering

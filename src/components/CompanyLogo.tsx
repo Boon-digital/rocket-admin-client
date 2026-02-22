@@ -1,6 +1,6 @@
 import { Image } from '@unpic/react'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { appBranding } from '@/app.config'
+import { appBranding } from '@boon-digital/rocket-admin-config/appConfig'
 
 export default function CompanyLogo() {
   const { theme } = useSettingsStore()
