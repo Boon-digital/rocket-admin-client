@@ -1,5 +1,5 @@
-import { entityRegistry, type EntityKey } from '@ruben/admin-template-config/registry'
-import type { BaseEntity } from '@ruben/admin-template-config/entities/types'
+import { entityRegistry, type EntityKey } from '@boon-digital/rocket-admin-config/registry'
+import type { BaseEntity } from '@boon-digital/rocket-admin-config/entities/types'
 
 // In the browser, use relative URLs (proxied by Vite in dev, same origin in prod).
 // During SSR, use the absolute API URL since there's no proxy.

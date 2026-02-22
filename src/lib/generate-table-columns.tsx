@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { createTextColumn, createDateColumn, createBadgeColumn, accessorProps, SortableHeader, StaticHeader } from '@/lib/table-column-helpers'
-import type { EntityConfig, TableColumn } from '@ruben/admin-template-config/entity-configs/types'
+import type { EntityConfig, TableColumn } from '@boon-digital/rocket-admin-config/entity-configs/types'
 
 /**
  * Base entity type that supports both ID formats:

@@ -1,4 +1,4 @@
-import type { Contact } from '@ruben/admin-template-config/entities/types'
+import type { Contact } from '@boon-digital/rocket-admin-config/entities/types'
 
 const isServer = typeof window === 'undefined'
 const origin = isServer ? (import.meta.env.VITE_API_URL ?? 'http://localhost:3001') : ''

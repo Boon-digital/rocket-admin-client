@@ -1,4 +1,4 @@
-import type { AppBranding } from '@ruben/admin-template-config/appConfig'
+import type { AppBranding } from '@boon-digital/rocket-admin-config/appConfig'
 
 // Override branding per app. Edit this file when creating a new app from this template.
 export const appBranding: AppBranding = {

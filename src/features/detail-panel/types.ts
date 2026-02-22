@@ -14,5 +14,5 @@ export type {
   DetailPanelProps,
   FieldRendererProps,
   FormState,
-} from '@ruben/admin-template-config/entity-configs/types'
-export { isFieldGroup } from '@ruben/admin-template-config/entity-configs/types'
+} from '@boon-digital/rocket-admin-config/entity-configs/types'
+export { isFieldGroup } from '@boon-digital/rocket-admin-config/entity-configs/types'

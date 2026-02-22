@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { getEnabledEntities } from '@ruben/admin-template-config/registry'
-import { iconMap } from '@ruben/admin-template-config/iconMap'
+import { getEnabledEntities } from '@boon-digital/rocket-admin-config/registry'
+import { iconMap } from '@boon-digital/rocket-admin-config/iconMap'
 import { appBranding } from '@/app.config'
 
 // Generate menu items from Entity Registry
