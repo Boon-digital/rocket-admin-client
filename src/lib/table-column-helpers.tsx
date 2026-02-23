@@ -182,7 +182,12 @@ export function createTextColumn<TData>({
       : () => <StaticHeader label={header} icon={icon} />,
     meta: { label: header },
     cell: ({ row }) => {
-      let value = row.getValue(accessorKey) as string | undefined
+      let value = row.getValue(accessorKey)
+
+      // Handle objects (including empty objects) - convert to string or use fallback
+      if (value !== null && typeof value === 'object') {
+        value = Object.keys(value).length > 0 ? JSON.stringify(value) : undefined
+      }
 
       if (formatValue && value) {
         value = formatValue(value)

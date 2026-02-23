@@ -67,6 +67,17 @@ export function isFieldReadOnly<T>(field: FieldConfig<T>, mode: PanelMode): bool
 export function formatValue(value: any, field: FieldConfig): string {
   if (value === null || value === undefined) return '-'
 
+  // Handle objects (including empty objects) - show dash for empty, stringify non-empty
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    if (Object.keys(value).length === 0) return '-'
+    // For non-empty objects, try to stringify them
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return '-'
+    }
+  }
+
   // Use custom format function if provided
   if (field.format) {
     return field.format(value)

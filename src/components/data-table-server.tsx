@@ -324,11 +324,13 @@ export function DataTableServer<TData, TValue>({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All {filter.label}</SelectItem>
-                    {filter.options.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    {filter.options
+                      .filter((option) => option.value !== '')
+                      .map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               ) : (

@@ -100,11 +100,13 @@ export function SelectField({ field, value, onChange, mode, error }: FieldRender
           <SelectValue placeholder={field.placeholder || 'Select an option'} />
         </SelectTrigger>
         <SelectContent>
-          {field.options?.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
+          {field.options
+            ?.filter((option) => option.value !== '')
+            .map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
       {error && <p className="text-sm text-destructive">{error}</p>}

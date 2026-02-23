@@ -78,7 +78,7 @@ function actionsColumn<T extends BaseEntity>(entityName: string, options?: Colum
                 }}
               >
                 <Copy className="h-4 w-4 mr-2" weight="light" />
-                Duplicate {entityName.toLowerCase()}
+                Duplicate {entityName?.toLowerCase() ?? 'item'}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

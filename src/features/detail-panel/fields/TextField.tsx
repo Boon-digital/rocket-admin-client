@@ -25,7 +25,7 @@ export function TextField({ field, value, onChange, mode, error }: FieldRenderer
       <Input
         id={field.key}
         type={field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
-        value={value || ''}
+        value={typeof value === 'object' ? '' : (value || '')}
         onChange={(e) => onChange(e.target.value)}
         placeholder={field.placeholder}
         className={error ? 'border-destructive' : ''}

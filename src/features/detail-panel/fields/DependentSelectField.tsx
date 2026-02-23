@@ -82,11 +82,13 @@ export function DependentSelectField({ field, value, onChange, mode, error, allD
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
+          {options
+            .filter((option) => option.value !== '')
+            .map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
       {error && <p className="text-sm text-destructive">{error}</p>}
