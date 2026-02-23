@@ -17,3 +17,10 @@ export async function searchDomains(query: string): Promise<Array<Domain>> {
   const json = await res.json()
   return json.data as Array<Domain>
 }
+
+export async function fetchDomainsByServerId(serverId: string): Promise<Array<Domain>> {
+  const res = await fetch(`${BASE}/by-field/serverId/${encodeURIComponent(serverId)}`)
+  if (!res.ok) return []
+  const json = await res.json()
+  return json.data as Array<Domain>
+}
