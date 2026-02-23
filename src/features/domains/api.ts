@@ -24,3 +24,19 @@ export async function fetchDomainsByServerId(serverId: string): Promise<Array<Do
   const json = await res.json()
   return json.data as Array<Domain>
 }
+
+export async function fetchDomainsByCustomerId(customerId: string): Promise<Array<Domain>> {
+  // First fetch the customer to get their domains array
+  const customerRes = await fetch(`${origin}/api/v1/customers/${encodeURIComponent(customerId)}`)
+  if (!customerRes.ok) return []
+  const customerJson = await customerRes.json()
+  const domainIds = customerJson.data?.domains as string[] | undefined
+
+  if (!domainIds || domainIds.length === 0) return []
+
+  // Fetch domains by their IDs
+  const res = await fetch(`${BASE}/by-ids?ids=${domainIds.join(',')}`)
+  if (!res.ok) return []
+  const json = await res.json()
+  return json.data as Array<Domain>
+}
