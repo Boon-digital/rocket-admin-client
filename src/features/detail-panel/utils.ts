@@ -85,11 +85,15 @@ export function formatValue(value: any, field: FieldConfig): string {
 
   // Default formatting based on type
   switch (field.type) {
-    case 'date':
-      return new Date(value).toLocaleDateString()
+    case 'date': {
+      const date = new Date(value)
+      return isNaN(date.getTime()) ? '-' : date.toLocaleDateString()
+    }
 
-    case 'datetime':
-      return new Date(value).toLocaleString()
+    case 'datetime': {
+      const date = new Date(value)
+      return isNaN(date.getTime()) ? '-' : date.toLocaleString()
+    }
 
     case 'checkbox':
       return value ? 'Yes' : 'No'

@@ -14,8 +14,15 @@ export function DateField({ field, value, onChange, mode, error }: FieldRenderer
   const readOnly = isFieldReadOnly(field, mode)
   const [open, setOpen] = useState(false)
 
-  // Parse the value to a Date object
-  const dateValue = value ? new Date(value) : undefined
+  // Parse the value to a Date object, handling invalid dates
+  const parseDateValue = (val: any): Date | undefined => {
+    if (!val) return undefined
+    const date = new Date(val)
+    // Check if the date is valid
+    if (isNaN(date.getTime())) return undefined
+    return date
+  }
+  const dateValue = parseDateValue(value)
 
   // Handle date selection from calendar
   const handleDateSelect = (date: Date | undefined) => {
@@ -29,6 +36,8 @@ export function DateField({ field, value, onChange, mode, error }: FieldRenderer
   const formatForInput = (val: any) => {
     if (!val) return ''
     const date = new Date(val)
+    // Check if the date is valid
+    if (isNaN(date.getTime())) return ''
     if (field.type === 'datetime') {
       return date.toISOString().slice(0, 16)
     }
