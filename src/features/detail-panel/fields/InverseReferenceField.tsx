@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import type { FieldRendererProps } from '../types'
 import { ReferenceTable } from '@/components/reference-table'
 import { FieldLabel } from './FieldLabel'
+import { referenceColumnsFromConfig } from '@/lib/generate-table-columns'
 
 export function InverseReferenceField(props: FieldRendererProps) {
   const { field, value, mode } = props
@@ -21,6 +23,12 @@ export function InverseReferenceField(props: FieldRendererProps) {
   // Extract the current entity's ID from the value
   const entityId = typeof value === 'string' ? value : ''
 
+  // Convert TableColumn[] to ColumnDef[]
+  const columns = useMemo(
+    () => referenceColumnsFromConfig(config.columns ?? []),
+    [config.columns]
+  )
+
   const handleRowClick = (row: any) => {
     if (!config.routePath) return
     const idKey = config.idKey || '_id.$oid'
@@ -39,7 +47,7 @@ export function InverseReferenceField(props: FieldRendererProps) {
           entityIds={entityId ? [entityId] : []}
           fetchFunction={(ids: string[]) => config.fetchFunction(ids[0])}
           queryKey={config.queryKey}
-          columns={config.columns}
+          columns={columns}
           defaultVisibleColumns={config.defaultVisibleColumns}
           onRowClick={config.routePath ? handleRowClick : undefined}
           emptyMessage={config.emptyMessage || `No ${config.entityType} data`}
