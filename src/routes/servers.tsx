@@ -1,9 +1,14 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { EntityPage } from '@/components/EntityPage'
 
-// Redirects to /companies (migrated from MOCKDATA_NEW to MOCKDATA)
 export const Route = createFileRoute('/servers')({
-  beforeLoad: () => {
-    throw redirect({ to: '/companies' })
-  },
-  component: () => null,
+  component: ServersPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    id: (search.id as string) || undefined,
+  }),
 })
+
+function ServersPage() {
+  const { id } = Route.useSearch()
+  return <EntityPage entityKey="servers" id={id} />
+}
