@@ -56,10 +56,10 @@ export function PasswordField({ field, value, onChange, mode, error, allData }: 
       <div className="space-y-2">
         <FieldLabel field={field} />
         <p
-          className="text-sm text-foreground font-mono cursor-default select-none"
+          className="text-sm text-foreground font-mono cursor-default select-none truncate"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          title={isEncryptedValue ? 'Hover to reveal' : undefined}
+          title={isEncryptedValue ? 'Hover to reveal' : revealed || undefined}
         >
           {loading
             ? '••••••••'
