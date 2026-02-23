@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { createTextColumn, createDateColumn, createBadgeColumn, accessorProps, SortableHeader, StaticHeader } from '@/lib/table-column-helpers'
+import { createTextColumn, createDateColumn, createBadgeColumn, createCountColumn, accessorProps, SortableHeader, StaticHeader } from '@/lib/table-column-helpers'
 import type { EntityConfig, TableColumn } from '@boon-digital/rocket-admin-config/entity-configs/types'
 
 /**
@@ -119,6 +119,19 @@ function tableColumnToColumnDef<T>(col: TableColumn): ColumnDef<T> {
       ...(col.minSize !== undefined && { minSize: col.minSize }),
       sortable: col.sortable ?? true,
       icon: col.icon,
+    })
+  }
+
+  if (type === 'count') {
+    const countCol = col as Extract<TableColumn, { type: 'count' }>
+    return createCountColumn<T>({
+      accessorKey: countCol.key,
+      header: countCol.label,
+      ...(countCol.size !== undefined && { size: countCol.size }),
+      ...(countCol.minSize !== undefined && { minSize: countCol.minSize }),
+      sortable: countCol.sortable ?? true,
+      icon: countCol.icon,
+      itemLabel: countCol.itemLabel,
     })
   }
 

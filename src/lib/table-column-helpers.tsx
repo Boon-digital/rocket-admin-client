@@ -206,6 +206,81 @@ export function createTextColumn<TData>({
   } as ColumnDef<TData>
 }
 
+interface CreateCountColumnOptions<TData> {
+  /** The key to access the array in the data object */
+  accessorKey: string
+  /** The header label to display */
+  header: string
+  /** Column size in pixels */
+  size?: number
+  /** Minimum column size in pixels */
+  minSize?: number
+  /** Enable sorting on this column */
+  sortable?: boolean
+  /** Icon name */
+  icon?: string
+  /** Singular label (e.g., "domain") - will add "s" for plural */
+  itemLabel?: string
+}
+
+/**
+ * Helper function to create a count column definition for arrays
+ * Displays the count of items in an array field
+ *
+ * @example
+ * const domainsColumn = createCountColumn({
+ *   accessorKey: 'domains',
+ *   header: 'Domains',
+ *   itemLabel: 'domain',
+ *   sortable: true,
+ * })
+ */
+export function createCountColumn<TData>({
+  accessorKey,
+  header,
+  size = 100,
+  minSize = 80,
+  sortable = true,
+  icon,
+  itemLabel,
+}: CreateCountColumnOptions<TData>): ColumnDef<TData> {
+  return {
+    ...accessorProps<TData>(accessorKey),
+    header: sortable
+      ? ({ column }) => <SortableHeader column={column} label={header} icon={icon} />
+      : () => <StaticHeader label={header} icon={icon} />,
+    meta: { label: header },
+    cell: ({ row }) => {
+      const value = row.getValue(accessorKey)
+      const count = Array.isArray(value) ? value.length : 0
+
+      if (itemLabel) {
+        const label = count === 1 ? itemLabel : `${itemLabel}s`
+        return (
+          <div className="text-sm text-muted-foreground">
+            {count} {label}
+          </div>
+        )
+      }
+
+      return (
+        <div className="text-sm tabular-nums">
+          {count}
+        </div>
+      )
+    },
+    sortingFn: (rowA, rowB) => {
+      const aVal = rowA.getValue(accessorKey)
+      const bVal = rowB.getValue(accessorKey)
+      const aCount = Array.isArray(aVal) ? aVal.length : 0
+      const bCount = Array.isArray(bVal) ? bVal.length : 0
+      return aCount - bCount
+    },
+    size,
+    minSize,
+  } as ColumnDef<TData>
+}
+
 interface CreateDateColumnOptions<TData> {
   /** The key to access the value in the data object */
   accessorKey: string
