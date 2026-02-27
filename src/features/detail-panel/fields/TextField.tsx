@@ -2,6 +2,7 @@ import { Input } from '@/components/ui/input'
 import type { FieldRendererProps } from '../types'
 import { formatValue, isFieldReadOnly } from '../utils'
 import { FieldLabel } from './FieldLabel'
+import { CopyableValue } from './CopyableValue'
 
 export function TextField({ field, value, onChange, mode, error }: FieldRendererProps) {
   const readOnly = isFieldReadOnly(field, mode)
@@ -10,9 +11,7 @@ export function TextField({ field, value, onChange, mode, error }: FieldRenderer
     return (
       <div className="space-y-2">
         <FieldLabel field={field} />
-        <p className="text-sm text-foreground truncate" title={formatValue(value, field)}>
-          {formatValue(value, field)}
-        </p>
+        <CopyableValue value={formatValue(value, field)} />
       </div>
     )
   }

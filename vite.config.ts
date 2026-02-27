@@ -12,6 +12,22 @@ const config = defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:3001',
+      '/auth': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        configure: (proxy) => {
+          // Let the browser follow OAuth redirects natively
+          proxy.on('proxyRes', (proxyRes) => {
+            const location = proxyRes.headers['location']
+            if (location && location.startsWith('http://localhost:3001')) {
+              proxyRes.headers['location'] = location.replace(
+                'http://localhost:3001',
+                'http://localhost:3000'
+              )
+            }
+          })
+        },
+      },
     },
   },
   resolve: {
@@ -25,7 +41,7 @@ const config = defineConfig({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({ spa: { enabled: true } }),
     ...(isProd ? [(await import('nitro/vite')).nitro()] : []),
     viteReact(),
   ],

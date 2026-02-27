@@ -171,9 +171,9 @@ function tableColumnToColumnDef<T>(col: TableColumn): ColumnDef<T> {
  */
 export function columnsFromConfig<T extends BaseEntity>(
   config: EntityConfig<T>,
-  options?: ColumnOptions<T>,
+  options?: ColumnOptions<T> & { showSelectColumn?: boolean },
 ): ColumnDef<T>[] {
-  const columns: ColumnDef<T>[] = [selectColumn<T>()]
+  const columns: ColumnDef<T>[] = options?.showSelectColumn ? [selectColumn<T>()] : []
 
   for (const col of config.columns ?? []) {
     columns.push(tableColumnToColumnDef<T>(col))

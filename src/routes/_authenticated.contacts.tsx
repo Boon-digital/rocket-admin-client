@@ -1,14 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { EntityPage } from '@/components/EntityPage'
 
-export const Route = createFileRoute('/companies')({
-  component: CompaniesPage,
+export const Route = createFileRoute('/_authenticated/contacts')({
+  component: ContactsPage,
   validateSearch: (search: Record<string, unknown>) => ({
     id: (search.id as string) || undefined,
   }),
 })
 
-function CompaniesPage() {
+function ContactsPage() {
   const { id } = Route.useSearch()
-  return <EntityPage entityKey="companies" id={id} />
+  return <EntityPage entityKey="contacts" id={id} />
 }

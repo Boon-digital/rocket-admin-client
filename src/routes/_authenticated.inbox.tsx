@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PageHeader } from '@/components/PageHeader'
 
-export const Route = createFileRoute('/inbox')({
+export const Route = createFileRoute('/_authenticated/inbox')({
   component: InboxPage,
 })
 

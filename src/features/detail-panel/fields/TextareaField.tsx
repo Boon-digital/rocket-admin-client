@@ -1,6 +1,7 @@
 import type { FieldRendererProps } from '../types'
 import { formatValue, isFieldReadOnly } from '../utils'
 import { FieldLabel } from './FieldLabel'
+import { CopyableValue } from './CopyableValue'
 
 export function TextareaField({ field, value, onChange, mode, error }: FieldRendererProps) {
   const readOnly = isFieldReadOnly(field, mode)
@@ -9,9 +10,7 @@ export function TextareaField({ field, value, onChange, mode, error }: FieldRend
     return (
       <div className="space-y-2">
         <FieldLabel field={field} />
-        <p className="text-sm text-foreground line-clamp-3" title={formatValue(value, field)}>
-          {formatValue(value, field)}
-        </p>
+        <CopyableValue value={formatValue(value, field)} className="line-clamp-3 whitespace-pre-wrap" />
       </div>
     )
   }

@@ -1,6 +1,6 @@
 import { useEffect, useImperativeHandle, useState, forwardRef } from 'react'
 import type { Ref } from 'react'
-import { X, PencilSimple, FloppyDisk, Plus } from '@phosphor-icons/react'
+import { X, PencilSimple, FloppyDisk, Plus, Trash } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import type { DetailPanelHandle, DetailPanelProps, PanelMode } from '../types'
@@ -205,6 +205,11 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
               <Button variant="outline" size="sm" onClick={handleEdit}>
                 <PencilSimple className="h-4 w-4 mr-2" weight="light" />
                 Edit
+              </Button>
+            )}
+            {mode === 'view' && onDelete && config.canDelete !== false && data && (
+              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(formData)}>
+                <Trash className="h-4 w-4" weight="light" />
               </Button>
             )}
             {(mode === 'edit' || mode === 'create') && (

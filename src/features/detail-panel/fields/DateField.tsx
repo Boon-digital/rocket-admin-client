@@ -9,6 +9,7 @@ import type { FieldRendererProps } from '../types'
 import { formatValue, isFieldReadOnly } from '../utils'
 import { cn } from '@/lib/utils'
 import { FieldLabel } from './FieldLabel'
+import { CopyableValue } from './CopyableValue'
 
 export function DateField({ field, value, onChange, mode, error }: FieldRendererProps) {
   const readOnly = isFieldReadOnly(field, mode)
@@ -48,9 +49,7 @@ export function DateField({ field, value, onChange, mode, error }: FieldRenderer
     return (
       <div className="space-y-2">
         <FieldLabel field={field} />
-        <p className="text-sm text-foreground truncate" title={formatValue(value, field)}>
-          {formatValue(value, field)}
-        </p>
+        <CopyableValue value={formatValue(value, field)} />
       </div>
     )
   }

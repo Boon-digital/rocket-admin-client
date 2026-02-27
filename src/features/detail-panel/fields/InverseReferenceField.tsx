@@ -6,7 +6,7 @@ import { FieldLabel } from './FieldLabel'
 import { referenceColumnsFromConfig } from '@/lib/generate-table-columns'
 
 export function InverseReferenceField(props: FieldRendererProps) {
-  const { field, value, mode } = props
+  const { field, mode, allData } = props
   const navigate = useNavigate()
 
   const config = field.inverseReferenceConfig
@@ -20,8 +20,14 @@ export function InverseReferenceField(props: FieldRendererProps) {
     return null
   }
 
-  // Extract the current entity's ID from the value
-  const entityId = typeof value === 'string' ? value : ''
+  // Extract the entity's ID from allData._id directly
+  // Handles MongoDB string ID or legacy { $oid: "..." } format
+  const rawId = allData?._id
+  const entityId = typeof rawId === 'string'
+    ? rawId
+    : typeof rawId === 'object' && rawId !== null && '$oid' in rawId
+      ? rawId.$oid
+      : ''
 
   // Convert TableColumn[] to ColumnDef[]
   const columns = useMemo(
@@ -31,8 +37,12 @@ export function InverseReferenceField(props: FieldRendererProps) {
 
   const handleRowClick = (row: any) => {
     if (!config.routePath) return
-    const idKey = config.idKey || '_id.$oid'
-    const rowId = idKey.split('.').reduce((obj: any, key: string) => obj?.[key], row)
+    const rawRowId = row._id
+    const rowId = typeof rawRowId === 'string'
+      ? rawRowId
+      : typeof rawRowId === 'object' && rawRowId !== null && '$oid' in rawRowId
+        ? rawRowId.$oid
+        : undefined
     if (rowId) {
       navigate({ to: config.routePath, search: { id: rowId } })
     }

@@ -16,6 +16,7 @@ export interface EntityQueryParams {
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
   filters?: Record<string, string>
+  dateFilters?: Record<string, { from: string; to: string }>
 }
 
 export interface EntityQueryResponse<T> {
@@ -42,6 +43,39 @@ export function makeEntityApi<T extends BaseEntity>(entityKey: EntityKey) {
     return json.data as Array<T>
   }
 
+  async function create(data: Omit<T, '_id'>): Promise<T> {
+    const res = await fetch(apiBase(PATH), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    })
+    if (!res.ok) throw new Error(`Failed to create ${entityKey}: ${res.status}`)
+    const json = await res.json()
+    return json.data as T
+  }
+
+  async function update(id: string, data: Partial<T>): Promise<T> {
+    const { _id, ...body } = data as any
+    const res = await fetch(apiBase(`${PATH}/${id}`), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) throw new Error(`Failed to update ${entityKey}: ${res.status}`)
+    const json = await res.json()
+    return json.data as T
+  }
+
+  async function remove(id: string): Promise<void> {
+    const res = await fetch(apiBase(`${PATH}/${id}`), {
+      method: 'DELETE',
+      credentials: 'include',
+    })
+    if (!res.ok) throw new Error(`Failed to delete ${entityKey}: ${res.status}`)
+  }
+
   async function fetchAll(params: EntityQueryParams): Promise<EntityQueryResponse<T>> {
     const qs = new URLSearchParams({
       page: String(params.page + 1),
@@ -53,6 +87,12 @@ export function makeEntityApi<T extends BaseEntity>(entityKey: EntityKey) {
     if (params.filters) {
       for (const [key, value] of Object.entries(params.filters)) {
         qs.set(key, value)
+      }
+    }
+    if (params.dateFilters) {
+      for (const [key, range] of Object.entries(params.dateFilters)) {
+        qs.set(`${key}[from]`, range.from)
+        qs.set(`${key}[to]`, range.to)
       }
     }
 
@@ -67,5 +107,5 @@ export function makeEntityApi<T extends BaseEntity>(entityKey: EntityKey) {
     }
   }
 
-  return { fetchById, search, fetchAll }
+  return { fetchById, search, fetchAll, create, update, remove }
 }

@@ -10,6 +10,7 @@ import {
 import type { FieldRendererProps } from '../types'
 import { formatValue, isFieldReadOnly } from '../utils'
 import { FieldLabel } from './FieldLabel'
+import { CopyableValue } from './CopyableValue'
 
 const CUSTOM_SENTINEL = '__custom__'
 
@@ -33,9 +34,7 @@ export function SelectField({ field, value, onChange, mode, error }: FieldRender
     return (
       <div className="space-y-2">
         <FieldLabel field={field} />
-        <p className="text-sm text-foreground truncate" title={formatValue(value, field)}>
-          {formatValue(value, field)}
-        </p>
+        <CopyableValue value={formatValue(value, field)} />
       </div>
     )
   }

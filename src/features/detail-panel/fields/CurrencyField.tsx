@@ -9,6 +9,7 @@ import {
 import type { FieldRendererProps } from '../types'
 import { isFieldReadOnly } from '../utils'
 import { FieldLabel } from './FieldLabel'
+import { CopyableValue } from './CopyableValue'
 
 const CURRENCIES = [
   { value: 'EUR', label: 'EUR' },
@@ -79,9 +80,7 @@ export function CurrencyField({ field, value, onChange, mode, error }: FieldRend
     return (
       <div className="space-y-2">
         <FieldLabel field={field} />
-        <p className="text-sm text-foreground truncate" title={displayValue}>
-          {displayValue}
-        </p>
+        <CopyableValue value={displayValue} />
       </div>
     )
   }

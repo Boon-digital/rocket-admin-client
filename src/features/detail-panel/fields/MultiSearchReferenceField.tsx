@@ -81,9 +81,14 @@ export function MultiSearchReferenceField(props: FieldRendererProps) {
             return
           }
           try {
-            const results = await field.searchConfig!.fetchFunction(id)
-            if (results && results.length > 0) {
-              const result = results[0]
+            let result: any = null
+            if (field.searchConfig!.fetchByIdFunction) {
+              result = await field.searchConfig!.fetchByIdFunction(id)
+            } else {
+              const results = await field.searchConfig!.fetchFunction(id)
+              result = results?.[0] ?? null
+            }
+            if (result) {
               const label = fieldsToDisplay
                 .map((fieldKey: string) => getNestedValue(result, fieldKey))
                 .filter(Boolean)

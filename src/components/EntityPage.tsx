@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useState, useMemo, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 
 import { entityRegistry, type EntityKey } from '@boon-digital/rocket-admin-config/registry'
 import type { BaseEntity } from '@boon-digital/rocket-admin-config/entities/types'
@@ -88,9 +89,25 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
   }
 
   const handleSave = async (data: T, isNew: boolean) => {
-    console.log(`Saving ${entry.name}:`, data, 'isNew:', isNew)
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    if (isNew) {
+      const created = await api.create(data)
+      await queryClient.invalidateQueries({ queryKey: [entityKey] })
+      navigate({ to: entry.route, search: { id: extractEntityId(created) } })
+    } else {
+      const id = extractEntityId(data)
+      await api.update(id, data)
+      await queryClient.invalidateQueries({ queryKey: [entityKey] })
+      await queryClient.invalidateQueries({ queryKey: [entityKey, 'detail', id] })
+    }
+  }
+
+  const handleDelete = async (data: T) => {
+    const id = extractEntityId(data)
+    if (!confirm(`Delete this ${entry.name}? This cannot be undone.`)) return
+    await api.remove(id)
+    toast.success(`${entry.name} deleted`)
     await queryClient.invalidateQueries({ queryKey: [entityKey] })
+    handleClosePanel()
   }
 
   return (
@@ -123,6 +140,7 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
         mode={panelMode}
         config={entityConfig}
         onSave={handleSave}
+        onDelete={handleDelete}
       />
     </div>
   )

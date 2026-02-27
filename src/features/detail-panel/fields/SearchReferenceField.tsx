@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/popover'
 import type { FieldRendererProps } from '../types'
 import { FieldLabel } from './FieldLabel'
+import { CopyableValue } from './CopyableValue'
 
 export function SearchReferenceField(props: FieldRendererProps) {
   const { field, value, onChange, mode, error } = props
@@ -41,13 +42,24 @@ export function SearchReferenceField(props: FieldRendererProps) {
     // Fetch the selected item to get its label
     const fetchSelectedItem = async () => {
       try {
-        // Try to fetch by ID - we'll search for the exact ID
-        const results = await field.searchConfig!.fetchFunction(value)
+        const fieldsToDisplay = field.searchConfig!.selectedDisplayFields || field.searchConfig!.displayFields
 
+        // Use dedicated fetchByIdFunction if available, otherwise fall back to search
+        if (field.searchConfig!.fetchByIdFunction) {
+          const result = await field.searchConfig!.fetchByIdFunction(value)
+          if (result) {
+            const label = fieldsToDisplay
+              .map((fieldKey: string) => getNestedValue(result, fieldKey))
+              .filter(Boolean)
+              .join(' - ')
+            setSelectedItemLabel(label)
+          }
+          return
+        }
+
+        const results = await field.searchConfig!.fetchFunction(value)
         if (results && results.length > 0) {
           const result = results[0]
-          // Use selectedDisplayFields if provided, otherwise fall back to displayFields
-          const fieldsToDisplay = field.searchConfig!.selectedDisplayFields || field.searchConfig!.displayFields
           const label = fieldsToDisplay
             .map((fieldKey: string) => getNestedValue(result, fieldKey))
             .filter(Boolean)
@@ -107,9 +119,7 @@ export function SearchReferenceField(props: FieldRendererProps) {
     return (
       <div className="space-y-2">
         {!field.hideLabel && <FieldLabel field={field} />}
-        <p className="text-sm text-foreground truncate" title={selectedLabel}>
-          {selectedLabel || '-'}
-        </p>
+        <CopyableValue value={selectedLabel || '-'} />
       </div>
     )
   }
