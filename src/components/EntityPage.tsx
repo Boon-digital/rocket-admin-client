@@ -88,16 +88,26 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
     navigate({ to: entry.route, search: { id: undefined } })
   }
 
+  const invalidateRelated = async () => {
+    for (const key of entry.invalidatesOnWrite ?? []) {
+      await queryClient.invalidateQueries({ queryKey: [key] })
+    }
+  }
+
   const handleSave = async (data: T, isNew: boolean) => {
     if (isNew) {
-      const created = await api.create(data)
+      // Strip UI-only hints before sending to the API
+      const { _duplicateReferenceKeys: _, ...payload } = data as any
+      const created = await api.create(payload as T)
       await queryClient.invalidateQueries({ queryKey: [entityKey] })
+      await invalidateRelated()
       navigate({ to: entry.route, search: { id: extractEntityId(created) } })
     } else {
       const id = extractEntityId(data)
       await api.update(id, data)
       await queryClient.invalidateQueries({ queryKey: [entityKey] })
       await queryClient.invalidateQueries({ queryKey: [entityKey, 'detail', id] })
+      await invalidateRelated()
     }
   }
 
@@ -107,6 +117,7 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
     await api.remove(id)
     toast.success(`${entry.name} deleted`)
     await queryClient.invalidateQueries({ queryKey: [entityKey] })
+    await invalidateRelated()
     handleClosePanel()
   }
 
@@ -125,10 +136,12 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
           defaultPageSize={20}
           filters={filters}
           headerActions={
-            <Button onClick={handleAddNew}>
-              <Plus className="h-4 w-4 mr-2" weight="light" />
-              Add {entry.name}
-            </Button>
+            entityConfig.canCreate !== false && (
+              <Button onClick={handleAddNew}>
+                <Plus className="h-4 w-4 mr-2" weight="light" />
+                Add {entry.name}
+              </Button>
+            )
           }
         />
       </main>

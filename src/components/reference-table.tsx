@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   flexRender,
   getCoreRowModel,
@@ -7,7 +7,6 @@ import {
   type ColumnDef,
   type ColumnOrderState,
   type SortingState,
-  type VisibilityState,
 } from '@tanstack/react-table'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -37,7 +36,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DotsSixVertical, SlidersHorizontal } from '@phosphor-icons/react'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -51,9 +49,15 @@ export interface ReferenceTableProps<TData> {
   fetchFunction: (ids: string[]) => Promise<TData[]>
   queryKey: string
 
+  /**
+   * Optional pre-loaded data. When provided, the fetch is skipped entirely
+   * and this data is rendered directly. entityIds is still used as the
+   * query-cache key so invalidation works correctly.
+   */
+  inlineData?: TData[]
+
   // Column configuration
   columns: Array<ColumnDef<TData>>
-  defaultVisibleColumns?: string[]
 
   // Interaction
   onRowClick?: (row: TData) => void
@@ -69,8 +73,8 @@ export function ReferenceTable<TData>({
   entityIds,
   fetchFunction,
   queryKey,
+  inlineData,
   columns,
-  defaultVisibleColumns,
   onRowClick,
   emptyMessage = 'No related items',
   maxHeight,
@@ -84,7 +88,6 @@ export function ReferenceTable<TData>({
       return []
     }
   })
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => {
     try {
       const stored = localStorage.getItem(`referenceTable-${queryKey}-columnOrder`)
@@ -93,39 +96,6 @@ export function ReferenceTable<TData>({
       return []
     }
   })
-
-  // Storage key for user preferences
-  const storageKey = `referenceTable-${queryKey}-columns`
-
-  // Load column visibility from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(storageKey)
-    if (stored) {
-      try {
-        setColumnVisibility(JSON.parse(stored))
-      } catch (e) {
-        console.error('Failed to load column visibility:', e)
-      }
-    } else if (defaultVisibleColumns) {
-      // Initialize with default visible columns
-      const initialVisibility: VisibilityState = {}
-      columns.forEach((col) => {
-        if ('accessorKey' in col && typeof col.accessorKey === 'string') {
-          initialVisibility[col.accessorKey] = defaultVisibleColumns.includes(col.accessorKey)
-        } else if (col.id) {
-          initialVisibility[col.id] = defaultVisibleColumns.includes(col.id)
-        }
-      })
-      setColumnVisibility(initialVisibility)
-    }
-  }, [storageKey, defaultVisibleColumns, columns])
-
-  // Save column visibility to localStorage
-  useEffect(() => {
-    if (Object.keys(columnVisibility).length > 0) {
-      localStorage.setItem(storageKey, JSON.stringify(columnVisibility))
-    }
-  }, [columnVisibility, storageKey])
 
   // Save column order to localStorage
   useEffect(() => {
@@ -139,21 +109,15 @@ export function ReferenceTable<TData>({
     localStorage.setItem(`referenceTable-${queryKey}-sorting`, JSON.stringify(sorting))
   }, [sorting, queryKey])
 
-  // Fetch referenced data
-  const { data: items = [], isLoading, error } = useQuery({
+  // Fetch referenced data — skipped when inlineData is provided
+  const { data: fetchedItems = [], isLoading, error } = useQuery({
     queryKey: [queryKey, entityIds],
     queryFn: () => fetchFunction(entityIds),
-    enabled: entityIds.length > 0,
+    enabled: entityIds.length > 0 && !inlineData,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  // Filter out internal columns (select, actions) from visibility controls
-  const visibilityColumns = useMemo(() => {
-    return columns.filter((col) => {
-      const id = 'accessorKey' in col ? col.accessorKey : col.id
-      return id !== 'select' && id !== 'actions'
-    })
-  }, [columns])
+  const items = inlineData ?? fetchedItems
 
   const table = useReactTable({
     data: items,
@@ -161,17 +125,15 @@ export function ReferenceTable<TData>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
     state: {
       sorting,
-      columnVisibility,
       columnOrder: columnOrder.length > 0 ? ['select', ...columnOrder.filter((id) => id !== 'select')] : columnOrder,
     },
   })
 
-  // Empty state
-  if (entityIds.length === 0) {
+  // Empty state — for inline data check items directly; for fetched data check entityIds
+  if (inlineData ? items.length === 0 : entityIds.length === 0) {
     return (
       <div className="rounded-md border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
         {emptyMessage}
@@ -179,8 +141,8 @@ export function ReferenceTable<TData>({
     )
   }
 
-  // Loading state
-  if (isLoading) {
+  // Loading state (never shown when inlineData is provided)
+  if (!inlineData && isLoading) {
     return (
       <div className="space-y-3">
         <Skeleton className="h-10 w-full" />
@@ -191,8 +153,8 @@ export function ReferenceTable<TData>({
     )
   }
 
-  // Error state
-  if (error) {
+  // Error state (never shown when inlineData is provided)
+  if (!inlineData && error) {
     return (
       <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
         Failed to load related {entityType} data
@@ -208,8 +170,7 @@ export function ReferenceTable<TData>({
           {items.length} {items.length === 1 ? 'item' : 'items'}
         </div>
         <ReferenceColumnSettingsPopover
-          table={table}
-          visibilityColumns={visibilityColumns}
+          columns={columns}
           columnOrder={columnOrder}
           onColumnOrderChange={setColumnOrder}
         />
@@ -272,11 +233,9 @@ export function ReferenceTable<TData>({
   )
 }
 
-function SortableReferenceColumnItem({ id, label, isVisible, onToggleVisibility }: {
+function SortableReferenceColumnItem({ id, label }: {
   id: string
   label: string
-  isVisible: boolean
-  onToggleVisibility: (value: boolean) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const style = {
@@ -299,20 +258,13 @@ function SortableReferenceColumnItem({ id, label, isVisible, onToggleVisibility 
       >
         <DotsSixVertical className="h-4 w-4" weight="light" />
       </button>
-      <label className="flex items-center gap-2 cursor-pointer flex-1">
-        <Checkbox
-          checked={isVisible}
-          onCheckedChange={(value) => onToggleVisibility(!!value)}
-        />
-        {label}
-      </label>
+      <span className="flex-1">{label}</span>
     </div>
   )
 }
 
-function ReferenceColumnSettingsPopover<TData>({ table, visibilityColumns, columnOrder, onColumnOrderChange }: {
-  table: ReturnType<typeof useReactTable<TData>>
-  visibilityColumns: Array<ColumnDef<TData>>
+function ReferenceColumnSettingsPopover<TData>({ columns, columnOrder, onColumnOrderChange }: {
+  columns: Array<ColumnDef<TData>>
   columnOrder: ColumnOrderState
   onColumnOrderChange: (order: ColumnOrderState) => void
 }) {
@@ -321,7 +273,7 @@ function ReferenceColumnSettingsPopover<TData>({ table, visibilityColumns, colum
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  const columnItems = visibilityColumns.map((col) => {
+  const columnItems = columns.map((col) => {
     const id = ('accessorKey' in col ? col.accessorKey : col.id) as string
     const label = typeof col.header === 'string'
       ? col.header
@@ -365,8 +317,6 @@ function ReferenceColumnSettingsPopover<TData>({ table, visibilityColumns, colum
                 key={item.id}
                 id={item.id}
                 label={item.label}
-                isVisible={table.getColumn(item.id)?.getIsVisible() ?? true}
-                onToggleVisibility={(value) => table.getColumn(item.id)?.toggleVisibility(value)}
               />
             ))}
           </SortableContext>

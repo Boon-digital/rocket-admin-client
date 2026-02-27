@@ -92,6 +92,13 @@ export function ReferenceTableField(props: FieldRendererProps) {
     if (referenceConfig?.queryKey) {
       queryClient.invalidateQueries({ queryKey: [referenceConfig.queryKey] })
     }
+    // Invalidate the parent entity's queries so the panel reloads its embedded
+    // data (e.g. staySummaries) after the server sync completes.
+    // _entityKey is set by EntityPage on the data object.
+    const parentEntityKey = allData?._entityKey
+    if (parentEntityKey) {
+      queryClient.invalidateQueries({ queryKey: [parentEntityKey] })
+    }
   }, [modalConfig, queryClient, referenceConfig?.queryKey, allData])
 
   const handleModalClose = useCallback(() => {
@@ -130,24 +137,32 @@ export function ReferenceTableField(props: FieldRendererProps) {
     const {
       entityType,
       fetchFunction,
+      getInlineData,
+      inlineIdField = 'id',
       columns,
       queryKey,
-      defaultVisibleColumns,
       onRowClick,
       emptyMessage,
       maxHeight,
     } = referenceConfig
+
+    // When getInlineData is configured, use embedded rows directly (no fetch).
+    // Derive entity IDs from the inline rows for the query-cache key.
+    const inlineRows = getInlineData ? getInlineData(allData) : undefined
+    const entityIds = inlineRows
+      ? inlineRows.map((row: any) => row[inlineIdField]).filter(Boolean)
+      : ids
 
     return (
       <div className="space-y-2" onClickCapture={(e) => { lastClickPos.current = { x: e.clientX, y: e.clientY } }}>
         {!field.hideLabel && <FieldLabel field={field} />}
         <ReferenceTable
           entityType={entityType}
-          entityIds={ids}
+          entityIds={entityIds}
           fetchFunction={fetchFunction}
           queryKey={queryKey}
+          inlineData={inlineRows}
           columns={columns}
-          defaultVisibleColumns={defaultVisibleColumns}
           onRowClick={modalConfig ? handleRowClick : onRowClick}
           emptyMessage={emptyMessage || `No ${entityType} data`}
           maxHeight={maxHeight}

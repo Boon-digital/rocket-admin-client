@@ -201,15 +201,15 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
         <div className="flex items-center justify-between p-6">
           <h2 className="text-lg font-semibold">{getTitle()}</h2>
           <div className="flex items-center gap-2">
+            {mode === 'view' && onDelete && config.canDelete !== false && data && (
+              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(formData)}>
+                <Trash className="h-4 w-4" weight="light" />
+              </Button>
+            )}
             {mode === 'view' && allowModeSwitch && config.canEdit !== false && (
               <Button variant="outline" size="sm" onClick={handleEdit}>
                 <PencilSimple className="h-4 w-4 mr-2" weight="light" />
                 Edit
-              </Button>
-            )}
-            {mode === 'view' && onDelete && config.canDelete !== false && data && (
-              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(formData)}>
-                <Trash className="h-4 w-4" weight="light" />
               </Button>
             )}
             {(mode === 'edit' || mode === 'create') && (

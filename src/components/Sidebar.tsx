@@ -6,6 +6,8 @@ import {
 } from '@phosphor-icons/react'
 import SettingsPopover from './SettingsPopover'
 import CompanyLogo from './CompanyLogo'
+import UserAvatar from './UserAvatar'
+import { useAuth } from '@/hooks/useAuth'
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +32,7 @@ const menuItems = getEnabledEntities().map((entity) => ({
 export default function AppSidebar() {
   const { state, setOpen } = useSidebar()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const { user } = useAuth()
 
 
   const handleToggle = () => {
@@ -90,6 +93,7 @@ export default function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SettingsPopover isCollapsed={isCollapsed} />
+        {user && <UserAvatar user={user} isCollapsed={isCollapsed} />}
         <div className="h-8 px-4 py-2 text-xs text-muted-foreground text-nowrap">
           {!isCollapsed && <div className="mt-1">{appBranding.footerText}</div>}
         </div>

@@ -12,7 +12,6 @@ import type {
   ColumnOrderState,
   PaginationState,
   SortingState,
-  VisibilityState,
 } from '@tanstack/react-table'
 import type { DateRange } from 'react-day-picker'
 import {
@@ -36,7 +35,6 @@ import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Input } from '@/components/ui/input'
 import {
@@ -137,21 +135,6 @@ export function DataTableServer<TData, TValue>({
       return []
     }
   })
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
-    try {
-      const stored = localStorage.getItem(`table-columns:${queryKey}`)
-      if (!stored) return {}
-      const parsed = JSON.parse(stored) as VisibilityState
-      // Filter out visibility state for columns that no longer exist
-      const cleaned: VisibilityState = {}
-      for (const [key, value] of Object.entries(parsed)) {
-        if (validColumnIds.has(key)) cleaned[key] = value
-      }
-      return cleaned
-    } catch {
-      return {}
-    }
-  })
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(() => {
     try {
       const stored = localStorage.getItem(`table-column-order:${queryKey}`)
@@ -175,10 +158,6 @@ export function DataTableServer<TData, TValue>({
     pageIndex: 0,
     pageSize: defaultPageSize,
   })
-
-  useEffect(() => {
-    localStorage.setItem(`table-columns:${queryKey}`, JSON.stringify(columnVisibility))
-  }, [columnVisibility, queryKey])
 
   useEffect(() => {
     localStorage.setItem(`table-sorting:${queryKey}`, JSON.stringify(sorting))
@@ -217,9 +196,8 @@ export function DataTableServer<TData, TValue>({
     data: data?.data ?? [],
     columns,
     pageCount: data?.pageCount ?? -1,
-    state: { sorting, columnVisibility, columnOrder: columnOrder.length > 0 ? ['select', ...columnOrder.filter((id) => id !== 'select')] : columnOrder, rowSelection, pagination },
+    state: { sorting, columnOrder: columnOrder.length > 0 ? ['select', ...columnOrder.filter((id) => id !== 'select' && id !== 'actions'), 'actions'] : columnOrder, rowSelection, pagination },
     onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
@@ -278,12 +256,10 @@ export function DataTableServer<TData, TValue>({
 
   const hasActiveFilters = Object.keys(activeFilters).length > 0 || Object.keys(activeDateFilters).length > 0 || globalFilter !== ''
   const tableColumnIds = new Set(table.getAllColumns().map((c) => c.id))
-  const visibleFilters = filters.filter(
-    (f) => tableColumnIds.has(f.columnId) && columnVisibility[f.columnId] !== false,
-  )
+  const visibleFilters = filters.filter((f) => tableColumnIds.has(f.columnId))
 
   return (
-    <div className="@container flex-1 min-w-0 min-h-0 flex flex-col p-6 gap-4 overflow-y-auto overflow-x-hidden">
+    <div className="@container flex-1 min-w-0 min-h-0 flex flex-col p-6 gap-4 overflow-y-auto">
       <div className="flex items-center gap-4 shrink-0">
         <div className="relative">
           <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" weight="light" />
@@ -387,17 +363,25 @@ export function DataTableServer<TData, TValue>({
           {headerActions}
         </div>
       </div>
+      <div className="overflow-x-auto">
       <Table style={{ tableLayout: 'fixed', width: '100%' }}>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} style={{ width: header.getSize() }}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
+              {headerGroup.headers.map((header) => {
+                const isActions = header.column.id === 'actions'
+                return (
+                  <TableHead
+                    key={header.id}
+                    style={{ width: header.getSize() }}
+                    className={isActions && !activeRowId ? 'sticky right-0 z-20 bg-background' : ''}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                )
+              })}
             </TableRow>
           ))}
         </TableHeader>
@@ -427,11 +411,21 @@ export function DataTableServer<TData, TValue>({
                 onClick={() => onRowClick?.(row.original)}
                 className={onRowClick ? 'cursor-pointer' : ''}
               >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} style={{ width: cell.column.getSize() }} className="truncate">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+                {row.getVisibleCells().map((cell) => {
+                  const isActions = cell.column.id === 'actions'
+                  return (
+                    <TableCell
+                      key={cell.id}
+                      style={{ width: cell.column.getSize() }}
+                      className={isActions && !activeRowId
+                        ? 'sticky right-0 bg-[hsl(var(--background))] [tr[data-state=selected]_&]:bg-[hsl(var(--muted))] truncate'
+                        : 'truncate'
+                      }
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  )
+                })}
               </TableRow>
               )
             })
@@ -444,6 +438,7 @@ export function DataTableServer<TData, TValue>({
           )}
         </TableBody>
       </Table>
+      </div>
       <div className="flex items-center justify-between py-4 shrink-0">
         <div className="hidden @3xl:flex flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of {data?.totalRows ?? 0} row(s) selected.
@@ -496,11 +491,9 @@ export function DataTableServer<TData, TValue>({
   )
 }
 
-function SortableColumnItem({ id, label, isVisible, onToggleVisibility }: {
+function SortableColumnItem({ id, label }: {
   id: string
   label: string
-  isVisible: boolean
-  onToggleVisibility: (value: boolean) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const style = {
@@ -523,13 +516,7 @@ function SortableColumnItem({ id, label, isVisible, onToggleVisibility }: {
       >
         <DotsSixVertical className="h-4 w-4" weight="light" />
       </button>
-      <label className="flex items-center gap-2 cursor-pointer flex-1">
-        <Checkbox
-          checked={isVisible}
-          onCheckedChange={(value) => onToggleVisibility(!!value)}
-        />
-        {label}
-      </label>
+      <span className="flex-1">{label}</span>
     </div>
   )
 }
@@ -545,9 +532,9 @@ function ColumnSettingsPopover<TData>({ table, columnOrder, onColumnOrderChange,
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  const hideable = table.getAllColumns().filter((column) => column.getCanHide())
+  const reorderable = table.getAllColumns().filter((c) => c.id !== 'select' && c.id !== 'actions')
   const orderedColumns = columnOrder.length > 0
-    ? [...hideable].sort((a, b) => {
+    ? [...reorderable].sort((a, b) => {
         const aIdx = columnOrder.indexOf(a.id)
         const bIdx = columnOrder.indexOf(b.id)
         if (aIdx === -1 && bIdx === -1) return 0
@@ -555,7 +542,7 @@ function ColumnSettingsPopover<TData>({ table, columnOrder, onColumnOrderChange,
         if (bIdx === -1) return -1
         return aIdx - bIdx
       })
-    : hideable
+    : reorderable
   const columnIds = orderedColumns.map((c) => c.id)
 
   function handleDragEnd(event: DragEndEvent) {
@@ -584,8 +571,6 @@ function ColumnSettingsPopover<TData>({ table, columnOrder, onColumnOrderChange,
                   key={column.id}
                   id={column.id}
                   label={label}
-                  isVisible={column.getIsVisible()}
-                  onToggleVisibility={(value) => column.toggleVisibility(value)}
                 />
               )
             })}

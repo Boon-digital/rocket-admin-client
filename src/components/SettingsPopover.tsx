@@ -1,4 +1,4 @@
-import { Globe, Moon, Palette, Gear, Sun } from '@phosphor-icons/react'
+import { Moon, Palette, Gear, Sun } from '@phosphor-icons/react'
 import type { PrimaryColor } from '@/stores/settingsStore'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,20 +18,14 @@ import { primaryColors, useSettingsStore } from '@/stores/settingsStore'
 
 const translations = {
   en: {
-    settings: 'Settings',
+    settings: 'Theme',
     darkMode: 'Dark Mode',
-    language: 'Language',
     primaryColor: 'Primary Color',
-    english: 'English',
-    dutch: 'Dutch',
   },
   nl: {
-    settings: 'Instellingen',
+    settings: 'Thema',
     darkMode: 'Donkere Modus',
-    language: 'Taal',
     primaryColor: 'Primaire Kleur',
-    english: 'Engels',
-    dutch: 'Nederlands',
   },
 }
 
@@ -51,7 +45,7 @@ interface SettingsPopoverProps {
 }
 
 export default function SettingsPopover({ isCollapsed }: SettingsPopoverProps) {
-  const { theme, language, primaryColor, setTheme, setLanguage, setPrimaryColor } =
+  const { theme, language, primaryColor, setTheme, setPrimaryColor } =
     useSettingsStore()
 
   const t = translations[language]
@@ -65,7 +59,7 @@ export default function SettingsPopover({ isCollapsed }: SettingsPopoverProps) {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-start overflow-hidden text-nowrap"
+          className={`w-full overflow-hidden text-nowrap ${isCollapsed ? 'justify-center' : 'justify-start'}`}
         >
           <Gear className="h-4 w-4 shrink-0" weight="light" />
           {!isCollapsed && <span className="ml-2">{t.settings}</span>}
@@ -90,29 +84,6 @@ export default function SettingsPopover({ isCollapsed }: SettingsPopoverProps) {
               checked={theme === 'dark'}
               onCheckedChange={handleThemeToggle}
             />
-          </div>
-
-          {/* Language Dropdown */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4" weight="light" />
-              <Label>{t.language}</Label>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  {language === 'en' ? t.english : t.dutch}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-popover">
-                <DropdownMenuItem onClick={() => setLanguage('en')}>
-                  {t.english}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage('nl')}>
-                  {t.dutch}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
 
           {/* Primary Color Dropdown */}

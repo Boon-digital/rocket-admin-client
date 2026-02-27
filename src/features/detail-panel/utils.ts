@@ -182,6 +182,8 @@ export function prepareForCopy<T>(
   delete copy.staySummaries
 
   // Auto-detect fields to clear from config (hideInCreate fields)
+  // Also track reference-table fields that are hidden in create mode for the duplicate message
+  const duplicateReferenceKeys: string[] = []
   for (const section of config.sections) {
     for (const field of getAllFields(section)) {
       if (field.hideInCreate) {
@@ -194,7 +196,16 @@ export function prepareForCopy<T>(
           delete obj[keys[keys.length - 1]]
         }
       }
+      if (
+        field.type === 'reference-table' &&
+        !field.showInMode?.includes('create')
+      ) {
+        duplicateReferenceKeys.push(field.key)
+      }
     }
+  }
+  if (duplicateReferenceKeys.length > 0) {
+    copy._duplicateReferenceKeys = duplicateReferenceKeys
   }
 
   // Clear any extra fields
