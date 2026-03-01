@@ -41,7 +41,9 @@ const config = defineConfig({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
-    tanstackStart({ spa: { enabled: true } }),
+    tanstackStart({
+      ...(process.env.VERCEL !== '1' && { spa: { enabled: true } }),
+    }),
     ...(isProd ? [(await import('nitro/vite')).nitro()] : []),
     viteReact(),
   ],
