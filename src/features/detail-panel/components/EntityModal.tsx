@@ -9,6 +9,7 @@ interface EntityModalProps<T> {
   config: EntityConfig<T>
   onSave?: (data: T, isNew: boolean) => Promise<void>
   defaultMode?: 'view' | 'edit'
+  initialMode?: 'view' | 'edit' | 'create'
   originPoint?: { x: number; y: number }
 }
 
@@ -19,6 +20,7 @@ export function EntityModal<T>({
   config,
   onSave,
   defaultMode = 'view',
+  initialMode,
   originPoint,
 }: EntityModalProps<T>) {
   const [mounted, setMounted] = useState(false)
@@ -114,6 +116,7 @@ export function EntityModal<T>({
           data={data}
           config={config}
           onSave={onSave}
+          mode={initialMode}
           defaultMode={defaultMode}
           allowModeSwitch={true}
           cancelClosesPanel={true}

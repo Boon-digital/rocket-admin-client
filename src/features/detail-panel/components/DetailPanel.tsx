@@ -28,7 +28,7 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
   }
 
   const [mode, setMode] = useState<PanelMode>(getInitialMode())
-  const [formData, setFormData] = useState<any>(data || generateDefaultData<T>(config))
+  const [formData, setFormData] = useState<any>(() => data ?? {})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isDirty, setIsDirty] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -40,12 +40,12 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
       setMode(initialMode || defaultMode)
       setIsDirty(false)
     } else {
-      setFormData(generateDefaultData<T>(config))
+      setFormData({})
       setMode('create')
       setIsDirty(false)
     }
     setErrors({})
-  }, [data, isOpen, config, initialMode, defaultMode])
+  }, [data, isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Get title based on mode
   const getTitle = () => {
@@ -62,7 +62,8 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
 
   // Handle field change
   const handleFieldChange = (key: string, value: any) => {
-    setFormData((prev: any) => setValue(prev, key, value))
+    const next = setValue(formData, key, value)
+    setFormData(next)
     setIsDirty(true)
 
     // Clear error for this field
@@ -73,6 +74,17 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
         return newErrors
       })
     }
+
+    if (config.onFieldChange) {
+      void config.onFieldChange(key, value, next, (patches) => {
+        setFormData((prev: any) => ({ ...prev, ...patches }))
+      }, mode)
+    }
+  }
+
+  const handleMultiFieldChange = (patches: Record<string, any>) => {
+    setFormData((prev: any) => ({ ...prev, ...patches }))
+    setIsDirty(true)
   }
 
   // Handle save
@@ -305,6 +317,7 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
                                     field={field}
                                     value={getValue(formData, field.key)}
                                     onChange={(value) => handleFieldChange(field.key, value)}
+                                    onChangeMulti={handleMultiFieldChange}
                                     mode={mode}
                                     error={errors[field.key]}
                                     allData={formData}
@@ -334,6 +347,7 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
                           field={item}
                           value={getValue(formData, item.key)}
                           onChange={(value) => handleFieldChange(item.key, value)}
+                          onChangeMulti={handleMultiFieldChange}
                           mode={mode}
                           error={errors[item.key]}
                           allData={formData}
@@ -378,6 +392,7 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
                       field={field}
                       value={getValue(formData, field.key)}
                       onChange={(value) => handleFieldChange(field.key, value)}
+                      onChangeMulti={handleMultiFieldChange}
                       mode={mode}
                       error={errors[field.key]}
                       allData={formData}

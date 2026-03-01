@@ -18,6 +18,13 @@ export async function fetchContactsByCompanyId(companyId: string): Promise<Array
   return json.data.data as Array<Contact>
 }
 
+export async function fetchContactsByHotelId(hotelId: string): Promise<Array<Contact>> {
+  const res = await fetch(`${BASE}?general.hotelId=${encodeURIComponent(hotelId)}&pageSize=1000`)
+  if (!res.ok) return []
+  const json = await res.json()
+  return json.data.data as Array<Contact>
+}
+
 export async function searchContacts(query: string): Promise<Array<Contact>> {
   const res = await fetch(`${BASE}/search?q=${encodeURIComponent(query)}&limit=10`)
   if (!res.ok) return []

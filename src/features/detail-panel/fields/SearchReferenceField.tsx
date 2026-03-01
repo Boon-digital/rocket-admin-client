@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Check, CaretUpDown } from '@phosphor-icons/react'
+import { CaretUpDown } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -165,20 +165,13 @@ export function SearchReferenceField(props: FieldRendererProps) {
                   <CommandItem
                     key={option.value}
                     value={option.value}
-                    onSelect={(currentValue) => {
-                      onChange(currentValue === value ? '' : currentValue)
+                    onSelect={() => {
+                      onChange(option.value === value ? '' : option.value)
                       setOpen(false)
                       setSearchQuery('')
                     }}
                     className="overflow-hidden"
                   >
-                    <Check
-                      className={cn(
-                        'mr-2 h-4 w-4 shrink-0',
-                        value === option.value ? 'opacity-100' : 'opacity-0'
-                      )}
-                      weight="light"
-                    />
                     <span className="truncate">{option.label}</span>
                   </CommandItem>
                 ))}

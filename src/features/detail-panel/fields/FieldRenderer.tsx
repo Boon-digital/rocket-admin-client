@@ -14,6 +14,8 @@ import { FileUploadField } from './FileUploadField'
 import { DependentSelectField } from './DependentSelectField'
 import { MultiSearchReferenceField } from './MultiSearchReferenceField'
 import { PasswordField } from './PasswordField'
+import { AutoGenerateField } from './AutoGenerateField'
+import { BadgeField } from './BadgeField'
 
 export function FieldRenderer(props: FieldRendererProps) {
   const { field } = props
@@ -73,6 +75,12 @@ export function FieldRenderer(props: FieldRendererProps) {
 
     case 'password':
       return <PasswordField {...props} />
+
+    case 'auto-generate':
+      return <AutoGenerateField {...props} />
+
+    case 'badge':
+      return <BadgeField {...props} />
 
     case 'nested':
       // TODO: Implement nested object rendering

@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Copy, DotsThree } from '@phosphor-icons/react'
+import { Copy, DotsThree, Trash } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -8,6 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { createTextColumn, createDateColumn, createBadgeColumn, createCountColumn, accessorProps, SortableHeader, StaticHeader } from '@/lib/table-column-helpers'
@@ -24,6 +25,7 @@ export type BaseEntity = {
 
 export interface ColumnOptions<T> {
   onDuplicate?: (row: T) => void
+  onDelete?: (row: T) => void
 }
 
 function selectColumn<T>(): ColumnDef<T> {
@@ -80,6 +82,21 @@ function actionsColumn<T extends BaseEntity>(entityName: string, options?: Colum
                 <Copy className="h-4 w-4 mr-2" weight="light" />
                 Duplicate {entityName?.toLowerCase() ?? 'item'}
               </DropdownMenuItem>
+            )}
+            {options?.onDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    options.onDelete!(entity)
+                  }}
+                >
+                  <Trash className="h-4 w-4 mr-2" weight="light" />
+                  Delete {entityName?.toLowerCase() ?? 'item'}
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

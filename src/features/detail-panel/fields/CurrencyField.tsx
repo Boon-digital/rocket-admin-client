@@ -47,36 +47,33 @@ const CURRENCIES = [
   { value: 'KRW', label: 'KRW' },
 ]
 
-interface CurrencyValue {
-  amount: string
-  currency: string
-}
-
-export function CurrencyField({ field, value, onChange, mode, error }: FieldRendererProps) {
+export function CurrencyField({ field, value, onChange, onChangeMulti, mode, error, allData }: FieldRendererProps) {
   const readOnly = isFieldReadOnly(field, mode)
+  const { amountKey, currencyKey } = field
 
-  // Parse the value - it should be an object with amount and currency
-  const currencyValue: CurrencyValue = value || { amount: '', currency: 'EUR' }
+  // Flat mode: read amount and currency from separate allData fields
+  const isFlat = !!(amountKey && currencyKey)
+  const amount: string = isFlat ? String((allData as any)?.[amountKey] ?? '') : (value?.amount ?? '')
+  const currency: string = isFlat ? String((allData as any)?.[currencyKey] ?? 'EUR') : (value?.currency ?? 'EUR')
 
   const handleAmountChange = (newAmount: string) => {
-    onChange({
-      ...currencyValue,
-      amount: newAmount,
-    })
+    if (isFlat) {
+      onChangeMulti?.({ [amountKey!]: newAmount, [currencyKey!]: currency })
+    } else {
+      onChange({ amount: newAmount, currency })
+    }
   }
 
   const handleCurrencyChange = (newCurrency: string) => {
-    onChange({
-      ...currencyValue,
-      currency: newCurrency,
-    })
+    if (isFlat) {
+      onChangeMulti?.({ [amountKey!]: amount, [currencyKey!]: newCurrency })
+    } else {
+      onChange({ amount, currency: newCurrency })
+    }
   }
 
   if (readOnly) {
-    const displayValue = currencyValue.amount
-      ? `${currencyValue.amount} ${currencyValue.currency}`
-      : '-'
-
+    const displayValue = amount ? `${amount} ${currency}` : '-'
     return (
       <div className="space-y-2">
         <FieldLabel field={field} />
@@ -94,22 +91,19 @@ export function CurrencyField({ field, value, onChange, mode, error }: FieldRend
         <Input
           id={field.key}
           type="text"
-          value={currencyValue.amount || ''}
+          value={amount}
           onChange={(e) => handleAmountChange(e.target.value)}
           placeholder={field.placeholder || 'Enter amount'}
           className={`flex-1 ${error ? 'border-destructive' : ''}`}
         />
-        <Select
-          value={currencyValue.currency || 'EUR'}
-          onValueChange={handleCurrencyChange}
-        >
+        <Select value={currency} onValueChange={handleCurrencyChange}>
           <SelectTrigger className="w-[80px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {CURRENCIES.map((currency) => (
-              <SelectItem key={currency.value} value={currency.value}>
-                {currency.label}
+            {CURRENCIES.map((c) => (
+              <SelectItem key={c.value} value={c.value}>
+                {c.label}
               </SelectItem>
             ))}
           </SelectContent>

@@ -333,7 +333,7 @@ export function createDateColumn<TData>({
       const date = new Date(value)
       const formatted = dateFormat
         ? date.toLocaleDateString(undefined, dateFormat)
-        : date.toLocaleDateString()
+        : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '/')
 
       return <div className="text-sm">{formatted}</div>
     },

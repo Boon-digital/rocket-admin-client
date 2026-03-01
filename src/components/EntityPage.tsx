@@ -34,23 +34,20 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
   const entityConfig = useMemo(() => configFactories[entityKey]() as any, [entityKey])
   const api = useMemo(() => makeEntityApi<T>(entityKey), [entityKey])
 
-  const cachedItem = useMemo(() => {
-    if (!id) return null
-    const queries = queryClient.getQueriesData<{ data: T[] }>({ queryKey: [entityKey] })
-    for (const [, queryData] of queries) {
-      const match = queryData?.data?.find((item) => extractEntityId(item) === id)
-      if (match) return match
-    }
-    return null
-  }, [id, queryClient, entityKey])
+  const panelConfig = useMemo(
+    () => copyData
+      ? { ...entityConfig, titles: { ...entityConfig.titles, create: `Copy of ${entityConfig.title}` } }
+      : entityConfig,
+    [copyData, entityConfig]
+  )
 
   const { data: fetchedItem } = useQuery({
     queryKey: [entityKey, 'detail', id],
     queryFn: async () => api.fetchById(id!),
-    enabled: !!id && !isCreateMode && !cachedItem,
+    enabled: !!id && !isCreateMode,
   })
 
-  const rawItem = (cachedItem ?? fetchedItem ?? null) as T | null
+  const rawItem = (fetchedItem ?? null) as T | null
   const selectedItem = rawItem ? { ...rawItem, _entityKey: entityKey } as T : null
   const isPanelOpen = !!id || isCreateMode
 
@@ -60,48 +57,89 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
     navigate({ to: entry.route, search: { id: extractEntityId(item) } })
   }
 
+  const buildInitialData = useCallback(() => {
+    const data: any = { ...entityConfig.defaultValues }
+    for (const section of entityConfig.sections ?? []) {
+      const fields = section.rows
+        ? section.rows.flatMap((r: any) => r.items.flatMap((item: any) => item.kind === 'group' ? item.fields : [item]))
+        : (section.fields ?? [])
+      for (const field of fields) {
+        if (field.autoGenerateConfig?.generate && !data[field.key]) {
+          data[field.key] = field.autoGenerateConfig.generate()
+        } else if (field.defaultValue !== undefined && data[field.key] === undefined) {
+          data[field.key] = field.defaultValue
+        }
+      }
+    }
+    return data
+  }, [entityConfig])
+
   const handleAddNew = () => {
-    setCopyData(null)
     navigate({ to: entry.route, search: { id: undefined } })
     setIsCreateMode(true)
     setPanelMode('create')
+    setCopyData(buildInitialData())
   }
 
-  const handleDuplicate = useCallback((item: T) => {
-    const copied = prepareForCopy(item, entityConfig)
+  const handleDuplicate = useCallback(async (item: T) => {
+    const baseCopy = prepareForCopy(item, entityConfig) as any
+
+    // Allow entity configs to inject extra duplicate logic (e.g. copying sub-entities)
+    const extra = entityConfig.onDuplicate ? await entityConfig.onDuplicate(item, baseCopy) : {}
+    const copied = { ...baseCopy, ...extra }
+
+    // Apply auto-generate fields (e.g. fresh confirmationNo)
+    const defaults = buildInitialData()
+    for (const key of Object.keys(defaults)) {
+      if (!copied[key]) copied[key] = defaults[key]
+    }
+
     navigate({ to: entry.route, search: { id: undefined } })
     setIsCreateMode(true)
     setPanelMode('create')
     setCopyData(copied)
-  }, [navigate, entityConfig, entry.route])
+  }, [navigate, entityConfig, entry.route, buildInitialData])
 
-  const columns = useMemo(
-    () => columnsFromConfig<T>(entityConfig, { onDuplicate: handleDuplicate }),
-    [handleDuplicate, entityConfig],
-  )
-
-  const filters = useMemo(() => getFiltersFromConfig(entityConfig), [entityConfig])
-
-  const handleClosePanel = () => {
+  const handleClosePanel = useCallback(() => {
     setIsCreateMode(false)
     setCopyData(null)
     navigate({ to: entry.route, search: { id: undefined } })
-  }
+  }, [navigate, entry.route])
 
-  const invalidateRelated = async () => {
+  const invalidateRelated = useCallback(async () => {
     for (const key of entry.invalidatesOnWrite ?? []) {
       await queryClient.invalidateQueries({ queryKey: [key] })
     }
-  }
+  }, [entry.invalidatesOnWrite, queryClient])
 
-  const handleSave = async (data: T, isNew: boolean) => {
+  const handleSave = useCallback(async (data: T, isNew: boolean) => {
     if (isNew) {
       // Strip UI-only hints before sending to the API
       const { _duplicateReferenceKeys: _, ...payload } = data as any
-      const created = await api.create(payload as T)
+
+      // Allow entity configs to handle extra pre-create side effects (e.g. strip _stayCopies)
+      const extraPayload: Record<string, any> = {}
+      const cleanPayload = { ...payload }
+      if (entityConfig.onBeforeCreate) {
+        const result = await entityConfig.onBeforeCreate(cleanPayload, extraPayload)
+        if (result) Object.assign(cleanPayload, result)
+      }
+
+      const created = await api.create(cleanPayload as T)
+      const newId = extractEntityId(created)
+
+      // Allow entity configs to run post-create side effects (e.g. create sub-entities)
+      if (entityConfig.onAfterCreate) {
+        await entityConfig.onAfterCreate(newId, extraPayload, queryClient)
+      }
+
       await queryClient.invalidateQueries({ queryKey: [entityKey] })
+      await queryClient.invalidateQueries({ queryKey: [entityKey, 'detail', newId] })
       await invalidateRelated()
-      navigate({ to: entry.route, search: { id: extractEntityId(created) } })
+      setIsCreateMode(false)
+      setCopyData(null)
+      setPanelMode('view')
+      navigate({ to: entry.route, search: { id: newId } })
     } else {
       const id = extractEntityId(data)
       await api.update(id, data)
@@ -109,9 +147,9 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
       await queryClient.invalidateQueries({ queryKey: [entityKey, 'detail', id] })
       await invalidateRelated()
     }
-  }
+  }, [api, queryClient, entityKey, entityConfig, invalidateRelated, navigate, entry.route])
 
-  const handleDelete = async (data: T) => {
+  const handleDelete = useCallback(async (data: T) => {
     const id = extractEntityId(data)
     if (!confirm(`Delete this ${entry.name}? This cannot be undone.`)) return
     await api.remove(id)
@@ -119,7 +157,14 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
     await queryClient.invalidateQueries({ queryKey: [entityKey] })
     await invalidateRelated()
     handleClosePanel()
-  }
+  }, [api, queryClient, entityKey, entry.name, invalidateRelated, handleClosePanel])
+
+  const columns = useMemo(
+    () => columnsFromConfig<T>(entityConfig, { onDuplicate: handleDuplicate, onDelete: handleDelete }),
+    [handleDuplicate, handleDelete, entityConfig],
+  )
+
+  const filters = useMemo(() => getFiltersFromConfig(entityConfig), [entityConfig])
 
   return (
     <div className="flex flex-1">
@@ -151,7 +196,7 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
         onClose={handleClosePanel}
         data={isCreateMode ? (copyData as T | null) : selectedItem}
         mode={panelMode}
-        config={entityConfig}
+        config={panelConfig}
         onSave={handleSave}
         onDelete={handleDelete}
       />

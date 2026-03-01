@@ -26,6 +26,21 @@ export async function fetchBookingsByCompanyId(companyId: string): Promise<Array
   return json.data.data as Array<Booking>
 }
 
+export async function fetchBookingsByBookerId(bookerId: string): Promise<Array<Booking>> {
+  const res = await fetch(`${BASE}?bookerId=${encodeURIComponent(bookerId)}&pageSize=1000`)
+  if (!res.ok) return []
+  const json = await res.json()
+  return json.data.data as Array<Booking>
+}
+
+export async function fetchBookingByStayId(stayId: string): Promise<Array<Booking>> {
+  if (!stayId) return []
+  const res = await fetch(`${BASE}/by-field/staySummaries.stayId/${encodeURIComponent(stayId)}`)
+  if (!res.ok) return []
+  const json = await res.json()
+  return json.data as Array<Booking>
+}
+
 export async function searchBookings(query: string): Promise<Array<Booking>> {
   const res = await fetch(`${BASE}/search?q=${encodeURIComponent(query)}&limit=10`)
   if (!res.ok) return []

@@ -87,12 +87,12 @@ export function formatValue(value: any, field: FieldConfig): string {
   switch (field.type) {
     case 'date': {
       const date = new Date(value)
-      return isNaN(date.getTime()) ? '-' : date.toLocaleDateString()
+      return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '/')
     }
 
     case 'datetime': {
       const date = new Date(value)
-      return isNaN(date.getTime()) ? '-' : date.toLocaleString()
+      return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '/') + ' ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
     }
 
     case 'checkbox':
@@ -143,6 +143,10 @@ export function generateDefaultData<T>(config: any): Partial<T> {
       if (field.autoGenerate && field.generateFn) {
         setValue(data, field.key, field.generateFn())
       }
+      // Auto-generate via autoGenerateConfig
+      else if (field.autoGenerateConfig?.generate && !getValue(data, field.key)) {
+        setValue(data, field.key, field.autoGenerateConfig.generate())
+      }
       // Use default value if provided
       else if (field.defaultValue !== undefined && getValue(data, field.key) === undefined) {
         setValue(data, field.key, field.defaultValue)
@@ -178,9 +182,6 @@ export function prepareForCopy<T>(
   // Clear documents (file references shouldn't be shared)
   delete copy.documents
 
-  // Clear denormalized summaries
-  delete copy.staySummaries
-
   // Auto-detect fields to clear from config (hideInCreate fields)
   // Also track reference-table fields that are hidden in create mode for the duplicate message
   const duplicateReferenceKeys: string[] = []
@@ -206,6 +207,15 @@ export function prepareForCopy<T>(
   }
   if (duplicateReferenceKeys.length > 0) {
     copy._duplicateReferenceKeys = duplicateReferenceKeys
+  }
+
+  // Apply copyFields whitelist — only keep the listed top-level keys
+  if (config.copyFields) {
+    for (const key of Object.keys(copy)) {
+      if (key !== '_duplicateReferenceKeys' && !config.copyFields.includes(key)) {
+        delete copy[key]
+      }
+    }
   }
 
   // Clear any extra fields

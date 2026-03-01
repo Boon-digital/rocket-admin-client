@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { format } from 'date-fns'
 import { Calendar as CalendarIcon } from '@phosphor-icons/react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -11,9 +10,13 @@ import { cn } from '@/lib/utils'
 import { FieldLabel } from './FieldLabel'
 import { CopyableValue } from './CopyableValue'
 
-export function DateField({ field, value, onChange, mode, error }: FieldRendererProps) {
+export function DateField({ field, value, onChange, mode, error, allData }: FieldRendererProps) {
   const readOnly = isFieldReadOnly(field, mode)
   const [open, setOpen] = useState(false)
+
+  const minDate = field.minDateField && allData?.[field.minDateField]
+    ? new Date(allData[field.minDateField])
+    : undefined
 
   // Parse the value to a Date object, handling invalid dates
   const parseDateValue = (val: any): Date | undefined => {
@@ -28,7 +31,10 @@ export function DateField({ field, value, onChange, mode, error }: FieldRenderer
   // Handle date selection from calendar
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
-      onChange(date.toISOString())
+      const yyyy = date.getFullYear()
+      const mm = String(date.getMonth() + 1).padStart(2, '0')
+      const dd = String(date.getDate()).padStart(2, '0')
+      onChange(`${yyyy}-${mm}-${dd}`)
       setOpen(false)
     }
   }
@@ -92,7 +98,7 @@ export function DateField({ field, value, onChange, mode, error }: FieldRenderer
           >
             <CalendarIcon className="mr-2 h-4 w-4 shrink-0" weight="light" />
             <span className="truncate">
-              {dateValue ? format(dateValue, 'PPP') : field.placeholder || 'Pick a date'}
+              {dateValue ? dateValue.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '/') : field.placeholder || 'Pick a date'}
             </span>
           </Button>
         </PopoverTrigger>
@@ -101,6 +107,8 @@ export function DateField({ field, value, onChange, mode, error }: FieldRenderer
             mode="single"
             selected={dateValue}
             onSelect={handleDateSelect}
+            disabled={minDate ? (date) => date < minDate : undefined}
+            defaultMonth={minDate ?? dateValue}
             initialFocus
           />
         </PopoverContent>

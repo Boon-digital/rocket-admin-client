@@ -57,7 +57,7 @@ interface SelectFilter {
   type: 'select'
   columnId: string
   label: string
-  options: Array<{ label: string; value: string }>
+  options: Array<{ label: string; value: string; field?: string }>
 }
 
 interface DateRangeFilter {
@@ -177,8 +177,24 @@ export function DataTableServer<TData, TValue>({
     return () => clearTimeout(timeout)
   }, [globalFilter])
 
+  // Resolve activeFilters to actual server field names.
+  // Options with a `field` override (e.g. subStatus values inside a status filter)
+  // are sent under that field name instead of the filter's columnId.
+  const resolvedFilters = useMemo(() => {
+    const resolved: Record<string, string> = {}
+    for (const [columnId, value] of Object.entries(activeFilters)) {
+      const filter = filters.find((f) => f.columnId === columnId)
+      const option = filter?.type === 'select'
+        ? filter.options.find((o) => o.value === value)
+        : undefined
+      const targetField = option?.field ?? columnId
+      resolved[targetField] = value
+    }
+    return resolved
+  }, [activeFilters, filters])
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: [queryKey, debouncedFilter, pagination.pageIndex, pagination.pageSize, sorting, activeFilters, activeDateFilters],
+    queryKey: [queryKey, debouncedFilter, pagination.pageIndex, pagination.pageSize, sorting, resolvedFilters, activeDateFilters],
     queryFn: () =>
       fetchData({
         page: pagination.pageIndex,
@@ -186,7 +202,7 @@ export function DataTableServer<TData, TValue>({
         search: debouncedFilter,
         sortBy: sorting[0]?.id,
         sortOrder: sorting[0] ? (sorting[0].desc ? 'desc' : 'asc') : undefined,
-        filters: activeFilters,
+        filters: resolvedFilters,
         dateFilters: activeDateFilters,
       }),
     placeholderData: (previousData) => previousData,
@@ -218,7 +234,7 @@ export function DataTableServer<TData, TValue>({
         search: debouncedFilter,
         sortBy: sorting[0]?.id,
         sortOrder: sorting[0] ? (sorting[0].desc ? 'desc' : 'asc') : undefined,
-        filters: activeFilters,
+        filters: resolvedFilters,
         dateFilters: activeDateFilters,
       })
 
@@ -259,8 +275,8 @@ export function DataTableServer<TData, TValue>({
   const visibleFilters = filters.filter((f) => tableColumnIds.has(f.columnId))
 
   return (
-    <div className="@container flex-1 min-w-0 min-h-0 flex flex-col p-6 gap-4 overflow-y-auto">
-      <div className="flex items-center gap-4 shrink-0">
+    <div className="@container flex-1 min-w-0 min-h-0 flex flex-col overflow-y-auto">
+      <div className="flex items-center gap-4 shrink-0 p-6">
         <div className="relative">
           <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" weight="light" />
           <Input
@@ -363,7 +379,7 @@ export function DataTableServer<TData, TValue>({
           {headerActions}
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className={cn('overflow-x-auto px-6', activeRowId && 'pr-0')}>
       <Table style={{ tableLayout: 'fixed', width: '100%' }}>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -439,9 +455,9 @@ export function DataTableServer<TData, TValue>({
         </TableBody>
       </Table>
       </div>
-      <div className="flex items-center justify-between py-4 shrink-0">
+      <div className="flex items-center justify-between p-6 shrink-0">
         <div className="hidden @3xl:flex flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of {data?.totalRows ?? 0} row(s) selected.
+          {data?.totalRows ?? 0} result(s)
         </div>
         <div className="flex items-center gap-6">
           <div className="hidden @2xl:flex items-center gap-2">

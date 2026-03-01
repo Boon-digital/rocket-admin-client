@@ -9,42 +9,55 @@ export interface UploadedFile {
 
 export interface FileStorageService {
   upload(file: File): Promise<UploadedFile>
-  delete(id: string): Promise<void>
+  delete(id: string, url?: string): Promise<void>
   getUrl(id: string): string | null
 }
 
-class LocalFileStorage implements FileStorageService {
-  private files = new Map<string, UploadedFile>()
-
+class VercelBlobStorage implements FileStorageService {
   async upload(file: File): Promise<UploadedFile> {
-    const url = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = () => reject(reader.error)
-      reader.readAsDataURL(file)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await fetch('/api/v1/upload', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
     })
 
-    const uploaded: UploadedFile = {
-      id: crypto.randomUUID(),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      url,
-      uploadedAt: new Date().toISOString(),
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(`Upload failed: ${text}`)
     }
 
-    this.files.set(uploaded.id, uploaded)
-    return uploaded
+    const result = await response.json()
+
+    return {
+      id: crypto.randomUUID(),
+      name: file.name,
+      size: result.size ?? file.size,
+      type: result.contentType ?? file.type,
+      url: result.url,
+      uploadedAt: new Date().toISOString(),
+    }
   }
 
-  async delete(id: string): Promise<void> {
-    this.files.delete(id)
+  async delete(_id: string, url?: string): Promise<void> {
+    if (!url) return
+    const params = new URLSearchParams({ url })
+    const response = await fetch(`/api/v1/upload?${params}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    })
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(`Delete failed: ${text}`)
+    }
   }
 
-  getUrl(id: string): string | null {
-    return this.files.get(id)?.url ?? null
+  getUrl(_id: string): string | null {
+    // Blob URLs are stored directly in the UploadedFile.url field
+    return null
   }
 }
 
-// Single swap point — replace with Vercel Blob storage later
-export const fileStorage: FileStorageService = new LocalFileStorage()
+export const fileStorage: FileStorageService = new VercelBlobStorage()

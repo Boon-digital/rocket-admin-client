@@ -38,7 +38,8 @@ export function FileUploadField({ field, value, onChange, mode, error }: FieldRe
   }, [files, onChange, maxFiles, maxFileSize])
 
   const removeFile = useCallback((id: string) => {
-    fileStorage.delete(id)
+    const file = files.find((f) => f.id === id)
+    fileStorage.delete(id, file?.url)
     onChange(files.filter((f) => f.id !== id))
   }, [files, onChange])
 

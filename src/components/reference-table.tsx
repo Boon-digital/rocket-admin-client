@@ -36,8 +36,16 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { DotsSixVertical, SlidersHorizontal } from '@phosphor-icons/react'
+import { Copy, DotsThree, DotsSixVertical, SlidersHorizontal, Trash } from '@phosphor-icons/react'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export interface ReferenceTableProps<TData> {
@@ -61,6 +69,9 @@ export interface ReferenceTableProps<TData> {
 
   // Interaction
   onRowClick?: (row: TData) => void
+  onDuplicate?: (row: TData) => void
+  onDelete?: (row: TData) => void
+  headerActions?: React.ReactNode
   emptyMessage?: string
 
   // Styling
@@ -76,6 +87,9 @@ export function ReferenceTable<TData>({
   inlineData,
   columns,
   onRowClick,
+  onDuplicate,
+  onDelete,
+  headerActions,
   emptyMessage = 'No related items',
   maxHeight,
   className = '',
@@ -119,24 +133,82 @@ export function ReferenceTable<TData>({
 
   const items = inlineData ?? fetchedItems
 
+  // Append a sticky actions column when any row action is enabled
+  const tableColumns: Array<ColumnDef<TData>> = (onDuplicate || onDelete)
+    ? [
+        ...columns,
+        {
+          id: 'actions',
+          header: '',
+          size: 44,
+          cell: ({ row }) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                  <span className="sr-only">Open menu</span>
+                  <DotsThree className="h-4 w-4" weight="light" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                {onDuplicate && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDuplicate(row.original)
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-2" weight="light" />
+                    Duplicate
+                  </DropdownMenuItem>
+                )}
+                {onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (confirm(`Delete this ${entityType}? This cannot be undone.`)) {
+                          onDelete(row.original)
+                        }
+                      }}
+                    >
+                      <Trash className="h-4 w-4 mr-2" weight="light" />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
+        } as ColumnDef<TData>,
+      ]
+    : columns
+
   const table = useReactTable({
     data: items,
-    columns,
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
     onColumnOrderChange: setColumnOrder,
     state: {
       sorting,
-      columnOrder: columnOrder.length > 0 ? ['select', ...columnOrder.filter((id) => id !== 'select')] : columnOrder,
+      columnOrder: columnOrder.length > 0 ? ['select', ...columnOrder.filter((id) => id !== 'select' && id !== 'actions'), 'actions'] : columnOrder,
     },
   })
 
   // Empty state — for inline data check items directly; for fetched data check entityIds
   if (inlineData ? items.length === 0 : entityIds.length === 0) {
     return (
-      <div className="rounded-md border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-        {emptyMessage}
+      <div className="space-y-2">
+        {headerActions && (
+          <div className="flex justify-end">{headerActions}</div>
+        )}
+        <div className="rounded-md border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
+          {emptyMessage}
+        </div>
       </div>
     )
   }
@@ -164,16 +236,19 @@ export function ReferenceTable<TData>({
 
   return (
     <div className={`space-y-2 w-full ${className}`}>
-      {/* Column Customization */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           {items.length} {items.length === 1 ? 'item' : 'items'}
         </div>
-        <ReferenceColumnSettingsPopover
-          columns={columns}
-          columnOrder={columnOrder}
-          onColumnOrderChange={setColumnOrder}
-        />
+        <div className="flex items-center gap-2">
+          {headerActions}
+          <ReferenceColumnSettingsPopover
+            columns={tableColumns.filter((c) => (c as any).id !== 'actions')}
+            columnOrder={columnOrder}
+            onColumnOrderChange={setColumnOrder}
+          />
+        </div>
       </div>
 
       {/* Table */}
@@ -185,16 +260,23 @@ export function ReferenceTable<TData>({
           <TableHeader className="sticky top-0 bg-background z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const isActions = header.column.id === 'actions'
+                  return (
+                    <TableHead
+                      key={header.id}
+                      style={isActions ? { width: header.getSize() } : undefined}
+                      className={isActions ? 'sticky right-0 bg-background z-20' : ''}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  )
+                })}
               </TableRow>
             ))}
           </TableHeader>
@@ -206,14 +288,21 @@ export function ReferenceTable<TData>({
                   className={onRowClick ? 'cursor-pointer' : ''}
                   onClick={() => onRowClick?.(row.original)}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const isActions = cell.column.id === 'actions'
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        style={isActions ? { width: cell.column.getSize() } : undefined}
+                        className={isActions ? 'sticky right-0 bg-[hsl(var(--background))] [tr[data-state=selected]_&]:bg-[hsl(var(--muted))] p-1' : ''}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    )
+                  })}
                 </TableRow>
               ))
             ) : (

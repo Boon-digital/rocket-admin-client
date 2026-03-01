@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { CircleNotch } from '@phosphor-icons/react'
 import type { FieldRendererProps, SelectOption } from '../types'
 import { formatValue, isFieldReadOnly } from '../utils'
 import { FieldLabel } from './FieldLabel'
@@ -76,19 +77,32 @@ export function DependentSelectField({ field, value, onChange, mode, error, allD
       <Select
         value={value || ''}
         onValueChange={onChange}
-        disabled={noParent || loading}
+        disabled={noParent}
       >
-        <SelectTrigger className={error ? 'border-destructive' : ''}>
-          <SelectValue placeholder={placeholder} />
+        <SelectTrigger className={`w-full ${error ? 'border-destructive' : ''}`}>
+          {loading ? (
+            <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
+              <CircleNotch className="h-3.5 w-3.5 shrink-0 animate-spin" />
+              <span className="truncate">Loading...</span>
+            </span>
+          ) : (
+            <SelectValue placeholder={placeholder} />
+          )}
         </SelectTrigger>
         <SelectContent>
-          {options
-            .filter((option) => option.value !== '')
-            .map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
+          {options.filter((option) => option.value !== '').length === 0 && !loading ? (
+            <div className="py-2 px-3 text-sm text-muted-foreground">
+              {noParent ? (config?.noParentMessage || 'Select a parent first') : 'No rooms for this hotel found'}
+            </div>
+          ) : (
+            options
+              .filter((option) => option.value !== '')
+              .map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))
+          )}
         </SelectContent>
       </Select>
       {error && <p className="text-sm text-destructive">{error}</p>}

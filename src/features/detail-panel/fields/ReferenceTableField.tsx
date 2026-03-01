@@ -7,6 +7,7 @@ import { ReferenceTable } from '@/components/reference-table'
 import { EntityModal } from '../components/EntityModal'
 import { Button } from '@/components/ui/button'
 import { FieldLabel } from './FieldLabel'
+import { prepareForCopy } from '../utils'
 
 export function ReferenceTableField(props: FieldRendererProps) {
   const { field, value, mode, onRequestSave, isDirty, allData } = props
@@ -15,6 +16,7 @@ export function ReferenceTableField(props: FieldRendererProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const [modalData, setModalData] = useState<any>(null)
   const [modalMode, setModalMode] = useState<'view' | 'edit'>('view')
+  const [modalInitialMode, setModalInitialMode] = useState<'view' | 'edit' | 'create' | undefined>(undefined)
   const [clickOrigin, setClickOrigin] = useState<{ x: number; y: number } | undefined>()
 
   const lastClickPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -53,6 +55,7 @@ export function ReferenceTableField(props: FieldRendererProps) {
 
     setClickOrigin({ ...lastClickPos.current })
     setModalMode('view')
+    setModalInitialMode(undefined)
     setModalOpen(true)
   }, [modalConfig, referenceConfig, isDirty, onRequestSave])
 
@@ -71,9 +74,73 @@ export function ReferenceTableField(props: FieldRendererProps) {
 
     setModalData(initialData)
     setClickOrigin({ ...lastClickPos.current })
-    setModalMode('edit') // create mode is triggered by data being null/initial
+    setModalMode('edit')
+    setModalInitialMode('create')
     setModalOpen(true)
   }, [modalConfig, isDirty, onRequestSave, allData])
+
+  // Handle row duplicate — opens the modal in create mode with copyFields-filtered data
+  const handleDuplicate = useCallback(async (row: any) => {
+    if (!modalConfig) return
+
+    // If parent is dirty, auto-save first
+    if (isDirty && onRequestSave) {
+      const saved = await onRequestSave()
+      if (!saved) return
+    }
+
+    // Fetch the full entity if needed, then filter through copyFields
+    const idKey = modalConfig.idKey || '_id.$oid'
+    const id = idKey.split('.').reduce((obj: any, key: string) => obj?.[key], row)
+    let fullData = row
+    if (modalConfig.fetchById && id) {
+      try {
+        fullData = await modalConfig.fetchById(id) ?? row
+      } catch {
+        toast.error('Failed to load entity data')
+        return
+      }
+    }
+
+    const copied = prepareForCopy(fullData, modalConfig.entityConfig)
+    // Pre-fill parent linkage (e.g. bookingId) on top of copied data
+    const initialData = modalConfig.getInitialData?.(allData) ?? {}
+    setModalData({ ...copied, ...initialData })
+    setClickOrigin({ ...lastClickPos.current })
+    setModalMode('edit')
+    setModalInitialMode('create')
+    setModalOpen(true)
+  }, [modalConfig, isDirty, onRequestSave, allData])
+
+  // Handle row delete
+  const handleDelete = useCallback(async (row: any) => {
+    if (!modalConfig?.onDelete) return
+    try {
+      await modalConfig.onDelete(row)
+      toast.success('Deleted successfully')
+
+      const parentEntityKey = allData?._entityKey
+      const parentId = allData?._id?.$oid ?? allData?._id
+
+      if (referenceConfig?.queryKey) {
+        queryClient.invalidateQueries({ queryKey: [referenceConfig.queryKey] })
+      }
+      if (parentEntityKey) {
+        queryClient.invalidateQueries({ queryKey: [parentEntityKey] })
+        if (parentId) {
+          queryClient.refetchQueries({ queryKey: [parentEntityKey, 'detail', String(parentId)] })
+        }
+      }
+    } catch {
+      toast.error('Failed to delete')
+    }
+  }, [modalConfig, queryClient, referenceConfig, allData])
+
+  const handleModalClose = useCallback(() => {
+    setModalOpen(false)
+    setModalData(null)
+    setModalInitialMode(undefined)
+  }, [])
 
   // Handle modal save
   const handleModalSave = useCallback(async (data: any, isNew: boolean) => {
@@ -99,12 +166,12 @@ export function ReferenceTableField(props: FieldRendererProps) {
     if (parentEntityKey) {
       queryClient.invalidateQueries({ queryKey: [parentEntityKey] })
     }
-  }, [modalConfig, queryClient, referenceConfig?.queryKey, allData])
 
-  const handleModalClose = useCallback(() => {
-    setModalOpen(false)
-    setModalData(null)
-  }, [])
+    // Close the modal after a successful create
+    if (isNew) {
+      handleModalClose()
+    }
+  }, [modalConfig, queryClient, referenceConfig?.queryKey, allData, handleModalClose])
 
   if (!referenceConfig) {
     return <div className="text-destructive">Reference configuration missing</div>
@@ -138,6 +205,7 @@ export function ReferenceTableField(props: FieldRendererProps) {
       entityType,
       fetchFunction,
       getInlineData,
+      getEntityIds,
       inlineIdField = 'id',
       columns,
       queryKey,
@@ -151,7 +219,9 @@ export function ReferenceTableField(props: FieldRendererProps) {
     const inlineRows = getInlineData ? getInlineData(allData) : undefined
     const entityIds = inlineRows
       ? inlineRows.map((row: any) => row[inlineIdField]).filter(Boolean)
-      : ids
+      : getEntityIds
+        ? getEntityIds(allData)
+        : ids
 
     return (
       <div className="space-y-2" onClickCapture={(e) => { lastClickPos.current = { x: e.clientX, y: e.clientY } }}>
@@ -164,16 +234,19 @@ export function ReferenceTableField(props: FieldRendererProps) {
           inlineData={inlineRows}
           columns={columns}
           onRowClick={modalConfig ? handleRowClick : onRowClick}
+          onDuplicate={modalConfig?.canAdd ? handleDuplicate : undefined}
+          onDelete={modalConfig?.onDelete ? handleDelete : undefined}
+          headerActions={
+            modalConfig?.canAdd && (
+              <Button variant="outline" size="sm" className="h-8" onClick={handleAdd}>
+                <Plus className="h-4 w-4 mr-2" weight="light" />
+                Add {referenceConfig.entityType}
+              </Button>
+            )
+          }
           emptyMessage={emptyMessage || `No ${entityType} data`}
           maxHeight={maxHeight}
         />
-
-        {modalConfig?.canAdd && (
-          <Button variant="outline" size="sm" onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-2" weight="light" />
-            Add {referenceConfig.entityType}
-          </Button>
-        )}
 
         {modalConfig && (
           <EntityModal
@@ -183,6 +256,7 @@ export function ReferenceTableField(props: FieldRendererProps) {
             config={modalConfig.entityConfig}
             onSave={handleModalSave}
             defaultMode={modalMode}
+            initialMode={modalInitialMode}
             originPoint={clickOrigin}
           />
         )}
