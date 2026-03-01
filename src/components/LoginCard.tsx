@@ -25,6 +25,8 @@ function GoogleIcon() {
   )
 }
 
+const apiBase = import.meta.env.VITE_API_URL ?? ''
+
 export function LoginPanel() {
   const theme = useSettingsStore((s) => s.theme)
   const logo = theme === 'dark' ? appBranding.logoDark : appBranding.logoDark
@@ -53,7 +55,7 @@ export function LoginPanel() {
 
           <div className="flex flex-col gap-3">
             <Button variant="outline" className="w-full gap-2" asChild>
-              <a href="/auth/microsoft">
+              <a href={`${apiBase}/auth/microsoft`}>
                 <MicrosoftIcon />
                 Continue with Microsoft
               </a>
@@ -66,7 +68,7 @@ export function LoginPanel() {
             </div>
 
             <Button variant="outline" className="w-full gap-2" asChild>
-              <a href="/auth/google">
+              <a href={`${apiBase}/auth/google`}>
                 <GoogleIcon />
                 Continue with Google
               </a>
