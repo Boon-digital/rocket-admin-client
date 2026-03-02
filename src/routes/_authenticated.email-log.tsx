@@ -20,22 +20,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowUp, ArrowDown, ArrowsDownUp } from '@phosphor-icons/react'
+import { EmailDetailPanel, type EmailLogEntry } from '@/components/email-log/EmailDetailPanel'
 
 export const Route = createFileRoute('/_authenticated/email-log')({
   component: EmailLogPage,
 })
-
-interface EmailLogEntry {
-  _id: any
-  bookingId: string
-  confirmationNo: string
-  to: string
-  sentBy: string
-  sentAt: string
-  status: 'sent' | 'failed'
-  errorMessage?: string
-  resendId?: string
-}
 
 interface EmailLogResponse {
   data: EmailLogEntry[]
@@ -89,6 +78,7 @@ function EmailLogPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'failed'>('all')
   const [sortKey, setSortKey] = useState<SortKey | null>('sentAt')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [selectedEntry, setSelectedEntry] = useState<EmailLogEntry | null>(null)
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -144,8 +134,8 @@ function EmailLogPage() {
   const thClass = 'cursor-pointer select-none'
 
   return (
-    <div className="flex flex-1">
-      <main className="flex flex-col flex-1 min-h-0 max-h-dvh">
+    <div className="flex flex-1 min-h-0 max-h-dvh overflow-hidden">
+      <main className="flex flex-col flex-1 min-h-0 overflow-auto">
         <PageHeader />
         <div className="flex-1 overflow-auto px-6 pb-6">
           {/* Toolbar */}
@@ -217,13 +207,21 @@ function EmailLogPage() {
                 )}
                 {processed.map((entry) => {
                   const id = typeof entry._id === 'object' ? entry._id.$oid : String(entry._id)
+                  const isSelected = selectedEntry
+                    ? (typeof selectedEntry._id === 'object' ? selectedEntry._id.$oid : String(selectedEntry._id)) === id
+                    : false
                   return (
-                    <TableRow key={id}>
+                    <TableRow
+                      key={id}
+                      className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted/30' : ''}`}
+                      onClick={() => setSelectedEntry(entry)}
+                    >
                       <TableCell>
                         <Link
                           to="/bookings"
                           search={{ id: entry.bookingId }}
                           className="text-primary underline underline-offset-2 hover:opacity-80"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           {entry.confirmationNo || entry.bookingId}
                         </Link>
@@ -246,6 +244,11 @@ function EmailLogPage() {
           )}
         </div>
       </main>
+      <EmailDetailPanel
+        entry={selectedEntry}
+        isOpen={selectedEntry !== null}
+        onClose={() => setSelectedEntry(null)}
+      />
     </div>
   )
 }
