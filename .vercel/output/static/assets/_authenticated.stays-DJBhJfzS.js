@@ -1,1 +1,0 @@
-import{d as o,j as r}from"./main-BLLd5dN2.js";import{E as i}from"./EntityPage-AVefsc2O.js";import"./registry-Cj0VuJaR.js";import"./utils-H_vbqczk.js";import"./IconBase.es-CsCtQDyd.js";import"./button-DJlTxm9Z.js";import"./PageHeader-C3v6SQlo.js";function y(){const{id:t}=o.useSearch();return r.jsx(i,{entityKey:"stays",id:t})}export{y as component};

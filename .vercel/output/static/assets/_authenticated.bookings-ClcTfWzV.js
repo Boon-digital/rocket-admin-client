@@ -1,1 +1,0 @@
-import{h as t,j as i}from"./main-BLLd5dN2.js";import{E as r}from"./EntityPage-AVefsc2O.js";import"./registry-Cj0VuJaR.js";import"./utils-H_vbqczk.js";import"./IconBase.es-CsCtQDyd.js";import"./button-DJlTxm9Z.js";import"./PageHeader-C3v6SQlo.js";function c(){const{id:o}=t.useSearch();return i.jsx(r,{entityKey:"bookings",id:o})}export{c as component};

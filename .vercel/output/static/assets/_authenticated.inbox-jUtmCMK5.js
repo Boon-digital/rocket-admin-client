@@ -1,1 +1,0 @@
-import{j as e}from"./main-BLLd5dN2.js";import{P as m}from"./PageHeader-C3v6SQlo.js";import"./IconBase.es-CsCtQDyd.js";import"./utils-H_vbqczk.js";function s(){return e.jsx("div",{className:"flex flex-1",children:e.jsx("main",{className:"flex flex-col flex-1 min-h-0 max-h-dvh",children:e.jsx(m,{})})})}export{s as component};
