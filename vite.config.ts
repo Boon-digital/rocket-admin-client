@@ -40,7 +40,7 @@ const config = defineConfig({
     }),
     tailwindcss(),
     tanstackStart({
-      spa: { enabled: true, prerender: false },
+      spa: { enabled: true },
     }),
     viteReact(),
   ],
