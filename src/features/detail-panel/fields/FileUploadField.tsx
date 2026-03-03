@@ -12,7 +12,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export function FileUploadField({ field, value, onChange, mode, error }: FieldRendererProps) {
+export function FileUploadField({ field, value, onChange, mode, error, onRequestSave }: FieldRendererProps) {
   const readOnly = isFieldReadOnly(field, mode)
   const files: UploadedFile[] = Array.isArray(value) ? value : []
   const inputRef = useRef<HTMLInputElement>(null)
@@ -33,9 +33,11 @@ export function FileUploadField({ field, value, onChange, mode, error }: FieldRe
     }
 
     if (uploaded.length > 0) {
-      onChange([...files, ...uploaded])
+      const next = [...files, ...uploaded]
+      onChange(next)
+      await onRequestSave?.({ [field.key]: next })
     }
-  }, [files, onChange, maxFiles, maxFileSize])
+  }, [files, onChange, onRequestSave, field.key, maxFiles, maxFileSize])
 
   const removeFile = useCallback((id: string) => {
     const file = files.find((f) => f.id === id)

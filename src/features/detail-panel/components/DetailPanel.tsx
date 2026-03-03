@@ -118,8 +118,9 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
   }
 
   // Handle request save (returns true if save succeeded)
-  const handleRequestSave = async (): Promise<boolean> => {
-    const validationErrors = validateData(formData, config)
+  const handleRequestSave = async (patch?: Record<string, any>): Promise<boolean> => {
+    const data = patch ? { ...formData, ...patch } : formData
+    const validationErrors = validateData(data, config)
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
       toast.error('Please fix validation errors')
@@ -130,9 +131,9 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
     try {
       const isNew = mode === 'create'
       if (config.onSave) {
-        await config.onSave(formData, mode as 'create' | 'edit')
+        await config.onSave(data, mode as 'create' | 'edit')
       } else if (onSave) {
-        await onSave(formData, isNew)
+        await onSave(data, isNew)
       }
       toast.success('Saved successfully')
       setIsDirty(false)
