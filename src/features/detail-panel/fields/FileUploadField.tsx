@@ -1,4 +1,15 @@
 import { useCallback, useRef, useState } from 'react'
+
+async function openPresigned(url: string) {
+  const params = new URLSearchParams({ key: url })
+  const res = await fetch(`/api/v1/documents/presign?${params}`, { credentials: 'include' })
+  if (!res.ok) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    return
+  }
+  const data = await res.json()
+  window.open(data.url, '_blank', 'noopener,noreferrer')
+}
 import { Upload, X, File, Download } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { fileStorage, type UploadedFile } from '@/lib/file-storage'
@@ -61,16 +72,16 @@ export function FileUploadField({ field, value, onChange, mode, error, onRequest
           <ul className="space-y-1">
             {files.map((f) => (
               <li key={f.id}>
-                <a
-                  href={f.url}
-                  download={f.name}
-                  className="flex items-center gap-2 text-sm rounded-md px-2 py-1.5 -mx-2 hover:bg-accent cursor-pointer"
+                <button
+                  type="button"
+                  onClick={() => openPresigned(f.url)}
+                  className="flex items-center gap-2 text-sm rounded-md px-2 py-1.5 -mx-2 hover:bg-accent cursor-pointer w-full text-left"
                 >
                   <File className="h-4 w-4 shrink-0 text-muted-foreground" weight="light" />
                   <span className="truncate">{f.name}</span>
                   <span className="text-muted-foreground shrink-0">({formatFileSize(f.size)})</span>
                   <Download className="h-4 w-4 shrink-0 text-muted-foreground ml-auto" weight="light" />
-                </a>
+                </button>
               </li>
             ))}
           </ul>
