@@ -112,7 +112,7 @@ export function EmailDetailPanel({ entry, isOpen, onClose }: EmailDetailPanelPro
             {entry.html ? (
               <iframe
                 ref={iframeRef}
-                srcDoc={entry.html}
+                srcDoc={`<style>@media(prefers-color-scheme:dark){html{filter:invert(1) hue-rotate(180deg)}img,video{filter:invert(1) hue-rotate(180deg)}}</style>${entry.html}`}
                 sandbox=""
                 className="w-full min-h-40"
                 style={{ height: '400px' }}
