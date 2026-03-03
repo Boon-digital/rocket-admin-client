@@ -30,8 +30,9 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
   const [copyData, setCopyData] = useState<Partial<T> | null>(null)
   const queryClient = useQueryClient()
 
+  const factory = configFactories[entityKey]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const entityConfig = useMemo(() => configFactories[entityKey]!() as any, [entityKey])
+  const entityConfig = useMemo(() => factory ? (factory() as any) : null, [factory])
   const api = useMemo(() => makeEntityApi<T>(entityKey), [entityKey])
 
   const panelConfig = useMemo(
@@ -50,6 +51,14 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
   const rawItem = (fetchedItem ?? null) as T | null
   const selectedItem = rawItem ? { ...rawItem, _entityKey: entityKey } as T : null
   const isPanelOpen = !!id || isCreateMode
+
+  if (!factory) {
+    return (
+      <div className="flex flex-1 items-center justify-center text-muted-foreground">
+        No config registered for entity: <code className="ml-1">{entityKey}</code>
+      </div>
+    )
+  }
 
   const handleRowClick = (item: T) => {
     setIsCreateMode(false)

@@ -12,17 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated.tasks'
 import { Route as AuthenticatedStaysRouteImport } from './routes/_authenticated.stays'
-import { Route as AuthenticatedServersRouteImport } from './routes/_authenticated.servers'
-import { Route as AuthenticatedPagesRouteImport } from './routes/_authenticated.pages'
-import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated.inbox'
 import { Route as AuthenticatedHotelsRouteImport } from './routes/_authenticated.hotels'
 import { Route as AuthenticatedEmailLogRouteImport } from './routes/_authenticated.email-log'
-import { Route as AuthenticatedDomainsRouteImport } from './routes/_authenticated.domains'
 import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated.documents'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
-import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated.customers'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated.contacts'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated.companies'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated.bookings'
@@ -41,29 +34,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedStaysRoute = AuthenticatedStaysRouteImport.update({
   id: '/stays',
   path: '/stays',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedServersRoute = AuthenticatedServersRouteImport.update({
-  id: '/servers',
-  path: '/servers',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedPagesRoute = AuthenticatedPagesRouteImport.update({
-  id: '/pages',
-  path: '/pages',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
-  id: '/inbox',
-  path: '/inbox',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedHotelsRoute = AuthenticatedHotelsRouteImport.update({
@@ -76,24 +49,9 @@ const AuthenticatedEmailLogRoute = AuthenticatedEmailLogRouteImport.update({
   path: '/email-log',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedDomainsRoute = AuthenticatedDomainsRouteImport.update({
-  id: '/domains',
-  path: '/domains',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedDocumentsRoute = AuthenticatedDocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
@@ -118,17 +76,10 @@ export interface FileRoutesByFullPath {
   '/bookings': typeof AuthenticatedBookingsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
-  '/customers': typeof AuthenticatedCustomersRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
   '/documents': typeof AuthenticatedDocumentsRoute
-  '/domains': typeof AuthenticatedDomainsRoute
   '/email-log': typeof AuthenticatedEmailLogRoute
   '/hotels': typeof AuthenticatedHotelsRoute
-  '/inbox': typeof AuthenticatedInboxRoute
-  '/pages': typeof AuthenticatedPagesRoute
-  '/servers': typeof AuthenticatedServersRoute
   '/stays': typeof AuthenticatedStaysRoute
-  '/tasks': typeof AuthenticatedTasksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -136,17 +87,10 @@ export interface FileRoutesByTo {
   '/bookings': typeof AuthenticatedBookingsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
-  '/customers': typeof AuthenticatedCustomersRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
   '/documents': typeof AuthenticatedDocumentsRoute
-  '/domains': typeof AuthenticatedDomainsRoute
   '/email-log': typeof AuthenticatedEmailLogRoute
   '/hotels': typeof AuthenticatedHotelsRoute
-  '/inbox': typeof AuthenticatedInboxRoute
-  '/pages': typeof AuthenticatedPagesRoute
-  '/servers': typeof AuthenticatedServersRoute
   '/stays': typeof AuthenticatedStaysRoute
-  '/tasks': typeof AuthenticatedTasksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -156,17 +100,10 @@ export interface FileRoutesById {
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
-  '/_authenticated/customers': typeof AuthenticatedCustomersRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
-  '/_authenticated/domains': typeof AuthenticatedDomainsRoute
   '/_authenticated/email-log': typeof AuthenticatedEmailLogRoute
   '/_authenticated/hotels': typeof AuthenticatedHotelsRoute
-  '/_authenticated/inbox': typeof AuthenticatedInboxRoute
-  '/_authenticated/pages': typeof AuthenticatedPagesRoute
-  '/_authenticated/servers': typeof AuthenticatedServersRoute
   '/_authenticated/stays': typeof AuthenticatedStaysRoute
-  '/_authenticated/tasks': typeof AuthenticatedTasksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -176,17 +113,10 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/companies'
     | '/contacts'
-    | '/customers'
-    | '/dashboard'
     | '/documents'
-    | '/domains'
     | '/email-log'
     | '/hotels'
-    | '/inbox'
-    | '/pages'
-    | '/servers'
     | '/stays'
-    | '/tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,17 +124,10 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/companies'
     | '/contacts'
-    | '/customers'
-    | '/dashboard'
     | '/documents'
-    | '/domains'
     | '/email-log'
     | '/hotels'
-    | '/inbox'
-    | '/pages'
-    | '/servers'
     | '/stays'
-    | '/tasks'
   id:
     | '__root__'
     | '/'
@@ -213,17 +136,10 @@ export interface FileRouteTypes {
     | '/_authenticated/bookings'
     | '/_authenticated/companies'
     | '/_authenticated/contacts'
-    | '/_authenticated/customers'
-    | '/_authenticated/dashboard'
     | '/_authenticated/documents'
-    | '/_authenticated/domains'
     | '/_authenticated/email-log'
     | '/_authenticated/hotels'
-    | '/_authenticated/inbox'
-    | '/_authenticated/pages'
-    | '/_authenticated/servers'
     | '/_authenticated/stays'
-    | '/_authenticated/tasks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -255,39 +171,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/tasks': {
-      id: '/_authenticated/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof AuthenticatedTasksRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/stays': {
       id: '/_authenticated/stays'
       path: '/stays'
       fullPath: '/stays'
       preLoaderRoute: typeof AuthenticatedStaysRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/servers': {
-      id: '/_authenticated/servers'
-      path: '/servers'
-      fullPath: '/servers'
-      preLoaderRoute: typeof AuthenticatedServersRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/pages': {
-      id: '/_authenticated/pages'
-      path: '/pages'
-      fullPath: '/pages'
-      preLoaderRoute: typeof AuthenticatedPagesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/inbox': {
-      id: '/_authenticated/inbox'
-      path: '/inbox'
-      fullPath: '/inbox'
-      preLoaderRoute: typeof AuthenticatedInboxRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/hotels': {
@@ -304,32 +192,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEmailLogRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/domains': {
-      id: '/_authenticated/domains'
-      path: '/domains'
-      fullPath: '/domains'
-      preLoaderRoute: typeof AuthenticatedDomainsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/documents': {
       id: '/_authenticated/documents'
       path: '/documents'
       fullPath: '/documents'
       preLoaderRoute: typeof AuthenticatedDocumentsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/customers': {
-      id: '/_authenticated/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/contacts': {
@@ -360,34 +227,20 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
-  AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
-  AuthenticatedDomainsRoute: typeof AuthenticatedDomainsRoute
   AuthenticatedEmailLogRoute: typeof AuthenticatedEmailLogRoute
   AuthenticatedHotelsRoute: typeof AuthenticatedHotelsRoute
-  AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
-  AuthenticatedPagesRoute: typeof AuthenticatedPagesRoute
-  AuthenticatedServersRoute: typeof AuthenticatedServersRoute
   AuthenticatedStaysRoute: typeof AuthenticatedStaysRoute
-  AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
-  AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
-  AuthenticatedDomainsRoute: AuthenticatedDomainsRoute,
   AuthenticatedEmailLogRoute: AuthenticatedEmailLogRoute,
   AuthenticatedHotelsRoute: AuthenticatedHotelsRoute,
-  AuthenticatedInboxRoute: AuthenticatedInboxRoute,
-  AuthenticatedPagesRoute: AuthenticatedPagesRoute,
-  AuthenticatedServersRoute: AuthenticatedServersRoute,
   AuthenticatedStaysRoute: AuthenticatedStaysRoute,
-  AuthenticatedTasksRoute: AuthenticatedTasksRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
