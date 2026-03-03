@@ -31,7 +31,7 @@ export function EntityPage<T extends BaseEntity>({ entityKey, id }: EntityPagePr
   const queryClient = useQueryClient()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const entityConfig = useMemo(() => configFactories[entityKey]() as any, [entityKey])
+  const entityConfig = useMemo(() => configFactories[entityKey]!() as any, [entityKey])
   const api = useMemo(() => makeEntityApi<T>(entityKey), [entityKey])
 
   const panelConfig = useMemo(

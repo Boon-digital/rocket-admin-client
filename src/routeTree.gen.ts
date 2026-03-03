@@ -20,6 +20,7 @@ import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated.
 import { Route as AuthenticatedHotelsRouteImport } from './routes/_authenticated.hotels'
 import { Route as AuthenticatedEmailLogRouteImport } from './routes/_authenticated.email-log'
 import { Route as AuthenticatedDomainsRouteImport } from './routes/_authenticated.domains'
+import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated.documents'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated.customers'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated.contacts'
@@ -80,6 +81,11 @@ const AuthenticatedDomainsRoute = AuthenticatedDomainsRouteImport.update({
   path: '/domains',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedDocumentsRoute = AuthenticatedDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof AuthenticatedContactsRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
   '/domains': typeof AuthenticatedDomainsRoute
   '/email-log': typeof AuthenticatedEmailLogRoute
   '/hotels': typeof AuthenticatedHotelsRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof AuthenticatedContactsRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
   '/domains': typeof AuthenticatedDomainsRoute
   '/email-log': typeof AuthenticatedEmailLogRoute
   '/hotels': typeof AuthenticatedHotelsRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
   '/_authenticated/domains': typeof AuthenticatedDomainsRoute
   '/_authenticated/email-log': typeof AuthenticatedEmailLogRoute
   '/_authenticated/hotels': typeof AuthenticatedHotelsRoute
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/customers'
     | '/dashboard'
+    | '/documents'
     | '/domains'
     | '/email-log'
     | '/hotels'
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/customers'
     | '/dashboard'
+    | '/documents'
     | '/domains'
     | '/email-log'
     | '/hotels'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
+    | '/_authenticated/documents'
     | '/_authenticated/domains'
     | '/_authenticated/email-log'
     | '/_authenticated/hotels'
@@ -299,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDomainsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/documents': {
+      id: '/_authenticated/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof AuthenticatedDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -343,6 +362,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
   AuthenticatedDomainsRoute: typeof AuthenticatedDomainsRoute
   AuthenticatedEmailLogRoute: typeof AuthenticatedEmailLogRoute
   AuthenticatedHotelsRoute: typeof AuthenticatedHotelsRoute
@@ -359,6 +379,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
   AuthenticatedDomainsRoute: AuthenticatedDomainsRoute,
   AuthenticatedEmailLogRoute: AuthenticatedEmailLogRoute,
   AuthenticatedHotelsRoute: AuthenticatedHotelsRoute,

@@ -7,7 +7,7 @@ import { makeCompanyConfig } from '@boon-digital/rocket-admin-config/entity-conf
 import { makeContactConfig } from '@boon-digital/rocket-admin-config/entity-configs/contacts.config'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const configFactories: Record<EntityKey, () => EntityConfig<any>> = {
+export const configFactories: Partial<Record<EntityKey, () => EntityConfig<any>>> = {
   bookings: makeBookingConfig,
   stays: makeStayConfig,
   hotels: makeHotelConfig,

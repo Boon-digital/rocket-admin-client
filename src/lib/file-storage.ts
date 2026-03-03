@@ -5,6 +5,7 @@ export interface UploadedFile {
   type: string
   url: string
   uploadedAt: string
+  uploadedBy?: string
 }
 
 export interface FileStorageService {
@@ -31,6 +32,9 @@ class VercelBlobStorage implements FileStorageService {
 
     const result = await response.json()
 
+    // Import lazily to avoid circular deps; Zustand non-hook getter is safe outside React
+    const { useAuthStore } = await import('@/stores/authStore')
+
     return {
       id: crypto.randomUUID(),
       name: file.name,
@@ -38,6 +42,7 @@ class VercelBlobStorage implements FileStorageService {
       type: result.contentType ?? file.type,
       url: result.url,
       uploadedAt: new Date().toISOString(),
+      uploadedBy: useAuthStore.getState().user?.email ?? undefined,
     }
   }
 

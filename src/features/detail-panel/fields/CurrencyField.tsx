@@ -61,7 +61,7 @@ export function CurrencyField({ field, value, onChange, onChangeMulti, mode, err
       onChangeMulti?.({ [amountKey!]: newAmount, [currencyKey!]: currency })
     } else {
       onChange({ amount: newAmount, currency })
-    }
+    }2
   }
 
   const handleCurrencyChange = (newCurrency: string) => {
