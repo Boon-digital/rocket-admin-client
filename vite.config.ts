@@ -6,8 +6,6 @@ import viteTsConfigPaths from 'vite-tsconfig-paths'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 
-const isProd = process.env.NODE_ENV === 'production'
-
 const config = defineConfig({
   server: {
     proxy: {
@@ -42,9 +40,8 @@ const config = defineConfig({
     }),
     tailwindcss(),
     tanstackStart({
-      ...(process.env.VERCEL !== '1' && { spa: { enabled: true } }),
+      spa: { enabled: true },
     }),
-    ...(isProd ? [(await import('nitro/vite')).nitro()] : []),
     viteReact(),
   ],
 })
