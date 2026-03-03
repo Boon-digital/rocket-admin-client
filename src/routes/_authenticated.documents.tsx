@@ -120,13 +120,7 @@ function DocumentsPage() {
     setDownloading(doc.id)
     try {
       const signedUrl = await getPresignedUrl(doc.url)
-      const a = document.createElement('a')
-      a.href = signedUrl
-      a.download = doc.name
-      a.rel = 'noopener noreferrer'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+      window.open(signedUrl, '_blank', 'noopener,noreferrer')
     } catch (err) {
       console.error('[documents] download error:', err)
     } finally {
