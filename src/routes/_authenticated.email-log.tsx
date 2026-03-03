@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select'
 import { ArrowUp, ArrowDown, ArrowsDownUp } from '@phosphor-icons/react'
 import { EmailDetailPanel, type EmailLogEntry } from '@/components/email-log/EmailDetailPanel'
+import { DateRangeFilterButton, type DateRangeFilter, type DateRangeValue } from '@/components/data-table-server'
 
 export const Route = createFileRoute('/_authenticated/email-log')({
   component: EmailLogPage,
@@ -76,9 +77,12 @@ function EmailLogPage() {
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'failed'>('all')
+  const [dateFilter, setDateFilter] = useState<DateRangeValue | null>(null)
   const [sortKey, setSortKey] = useState<SortKey | null>('sentAt')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [selectedEntry, setSelectedEntry] = useState<EmailLogEntry | null>(null)
+
+  const sentAtFilter: DateRangeFilter = { type: 'dateRange', columnId: 'sentAt', label: 'Sent date' }
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -97,6 +101,16 @@ function EmailLogPage() {
     // Filter by status
     if (statusFilter !== 'all') {
       rows = rows.filter((r) => r.status === statusFilter)
+    }
+
+    // Filter by date range
+    if (dateFilter) {
+      const from = new Date(dateFilter.from).setHours(0, 0, 0, 0)
+      const to = new Date(dateFilter.to).setHours(23, 59, 59, 999)
+      rows = rows.filter((r) => {
+        const t = new Date(r.sentAt).getTime()
+        return t >= from && t <= to
+      })
     }
 
     // Filter by search (confirmation no, recipient, sent by)
@@ -129,7 +143,7 @@ function EmailLogPage() {
     }
 
     return rows
-  }, [data, search, statusFilter, sortKey, sortDir])
+  }, [data, search, statusFilter, dateFilter, sortKey, sortDir])
 
   const thClass = 'cursor-pointer select-none'
 
@@ -156,17 +170,18 @@ function EmailLogPage() {
                 <SelectItem value="failed">Failed</SelectItem>
               </SelectContent>
             </Select>
-            {data && (
-              <span className="text-sm text-muted-foreground ml-auto">
-                {processed.length} {processed.length === 1 ? 'entry' : 'entries'}
-              </span>
-            )}
+            <DateRangeFilterButton
+              filter={sentAtFilter}
+              value={dateFilter ?? undefined}
+              onChange={(range) => setDateFilter(range)}
+            />
           </div>
 
           {isLoading && <p className="text-sm text-muted-foreground">Loading email log…</p>}
           {isError && <p className="text-sm text-destructive">Failed to load email log.</p>}
 
           {data && (
+            <div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -241,6 +256,10 @@ function EmailLogPage() {
                 })}
               </TableBody>
             </Table>
+            <p className="text-sm text-muted-foreground mt-3">
+              {processed.length} {processed.length === 1 ? 'entry' : 'entries'}
+            </p>
+            </div>
           )}
         </div>
       </main>

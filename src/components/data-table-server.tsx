@@ -597,7 +597,7 @@ function ColumnSettingsPopover<TData>({ table, columnOrder, onColumnOrderChange,
   )
 }
 
-function DateRangeFilterButton({
+export function DateRangeFilterButton({
   filter,
   value,
   onChange,
@@ -693,4 +693,4 @@ export function getFiltersFromConfig(config: { sections: Array<{ fields?: Array<
   })
 }
 
-export type { FetchParams, FetchResponse, ColumnFilter, DateRangeValue }
+export type { FetchParams, FetchResponse, ColumnFilter, DateRangeFilter, DateRangeValue }

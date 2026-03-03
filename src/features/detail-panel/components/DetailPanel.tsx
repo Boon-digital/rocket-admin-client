@@ -306,7 +306,7 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
                           )}
                           <div className="rounded-md border p-3">
                             <div
-                              className="grid gap-4"
+                              className="grid gap-2"
                               style={{
                                 gridTemplateColumns: `repeat(${innerColumns}, 1fr)`,
                               }}

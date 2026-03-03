@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { PaperPlaneTilt, Check } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { useQueryClient } from "@tanstack/react-query"
 import { fetchContactById } from "@/features/contacts/api"
 import { fetchCompanyById } from "@/features/companies/api"
 import { useAuthStore } from "@/stores/authStore"
@@ -12,16 +13,16 @@ import { generateConfirmationPDFBase64 } from "./generatePDF"
 export function SendConfirmationButtonField({
   mode,
   allData,
-  onChange,
-  onRequestSave,
 }: FieldRendererProps) {
   if (mode !== "view" || !allData) return null
 
   const { user } = useAuthStore()
+  const queryClient = useQueryClient()
   const [isSending, setIsSending] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [bookerData, setBookerData] = useState<any>(null)
   const [companyData, setCompanyData] = useState<any>(null)
+  const [justSent, setJustSent] = useState(false)
 
   const bookerId =
     typeof allData.bookerId === "object"
@@ -125,21 +126,11 @@ export function SendConfirmationButtonField({
         throw new Error(err?.error ?? "Failed to send email")
       }
 
-      // Mark confirmation as sent and update status
-      if (!allData.confirmationSent) {
-        onChange?.("confirmationSent", true)
-        if (!allData.statusManuallySet) {
-          onChange?.("status", "upcoming_confirmation_sent")
-        }
-        const saved = await onRequestSave?.()
-        if (saved) {
-          toast.success("Confirmation sent and saved.")
-        } else {
-          toast.success("Confirmation sent.")
-        }
-      } else {
-        toast.success("Confirmation sent.")
-      }
+      setJustSent(true)
+      toast.success("Confirmation sent.")
+      // Server already patched confirmationSent + confirmationSentAt — refetch both list and detail
+      await queryClient.invalidateQueries({ queryKey: ["bookings"] })
+      await queryClient.invalidateQueries({ queryKey: ["bookings", "detail", bookingId] })
     } catch (err: any) {
       console.error("[send-confirmation] Error:", err)
       toast.error(err?.message ?? "Failed to send confirmation email.")
@@ -148,22 +139,38 @@ export function SendConfirmationButtonField({
     }
   }
 
+  const isSent = allData.confirmationSent || justSent
+
+const sentAtRaw = allData.confirmationSentAt?.$date ?? allData.confirmationSentAt
+  const sentAtDate = sentAtRaw ? new Date(sentAtRaw) : null
+  const sentAt = sentAtDate && !isNaN(sentAtDate.getTime())
+    ? sentAtDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    : null
+
   return (
     <div className="pt-2">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setShowModal(true)}
-        disabled={isSending}
-        type="button"
-      >
-        <PaperPlaneTilt className="size-4 mr-2" />
-        {isSending ? "Sending…" : "Send Confirmation"}
-      </Button>
-      {allData.confirmationSent && (
-        <p className="text-xs text-green-700 dark:text-green-400 mt-1 flex items-center gap-1">
-          <Check className="size-3" />Confirmation sent
-        </p>
+      {isSent ? (
+        <div className="flex flex-col gap-0.5 px-3 py-2 text-sm text-green-700 dark:text-green-400 bg-sidebar rounded-md">
+          <div className="flex items-center gap-2">
+            <Check className="size-4 shrink-0" />
+            Confirmation sent
+          </div>
+          {sentAt && (
+            <span className="text-xs text-muted-foreground pl-6">{sentAt}</span>
+          )}
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={() => setShowModal(true)}
+          disabled={isSending}
+          type="button"
+        >
+          <PaperPlaneTilt className="size-4 mr-2" />
+          {isSending ? "Sending…" : "Send"}
+        </Button>
       )}
 
       <StaySelectionModal
@@ -172,6 +179,7 @@ export function SendConfirmationButtonField({
         stays={staySummaries}
         onGeneratePDF={handleSend}
         isGenerating={isSending}
+        mode="send"
       />
     </div>
   )

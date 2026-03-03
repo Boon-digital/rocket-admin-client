@@ -133,7 +133,7 @@ export function DownloadPDFButton({
           type="button"
         >
           <FileArrowDown className="size-4 mr-2" />
-          {isGenerating ? "Generating…" : "Confirmation PDF"}
+          {isGenerating ? "Generating…" : "Download"}
         </Button>
         {isDirty && (
           <p className="text-xs text-muted-foreground">
@@ -148,6 +148,7 @@ export function DownloadPDFButton({
         stays={staySummaries}
         onGeneratePDF={handleGeneratePDF}
         isGenerating={isGenerating}
+        mode="download"
       />
     </>
   )

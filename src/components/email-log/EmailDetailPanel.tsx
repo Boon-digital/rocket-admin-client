@@ -69,11 +69,11 @@ export function EmailDetailPanel({ entry, isOpen, onClose }: EmailDetailPanelPro
       style={{ maxWidth: isOpen ? '640px' : '0px', width: '640px' }}
     >
       {/* sticky header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b sticky top-0 bg-background z-10 shrink-0">
-        <span className="text-sm font-medium text-muted-foreground">Email detail</span>
+      <div className="flex items-center justify-between p-6 sticky top-0 bg-background z-10 shrink-0">
+        <h2 className="text-lg font-semibold">Email Detail</h2>
         <button
           onClick={onClose}
-          className="rounded-md p-1 hover:bg-muted transition-colors"
+          className="inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground size-9 transition-all"
           aria-label="Close panel"
         >
           <X className="size-4" />
@@ -87,8 +87,6 @@ export function EmailDetailPanel({ entry, isOpen, onClose }: EmailDetailPanelPro
             <p className="text-base font-semibold leading-snug">
               {`Your hotel confirmation: ${entry.confirmationNo || entry.bookingId}`}
             </p>
-
-            <div className="border-t" />
 
             {/* Metadata */}
             <div className="space-y-1.5">
@@ -110,15 +108,13 @@ export function EmailDetailPanel({ entry, isOpen, onClose }: EmailDetailPanelPro
               )}
             </div>
 
-            <div className="border-t" />
-
             {/* HTML body */}
             {entry.html ? (
               <iframe
                 ref={iframeRef}
                 srcDoc={entry.html}
                 sandbox=""
-                className="w-full border rounded min-h-40"
+                className="w-full min-h-40"
                 style={{ height: '400px' }}
                 title="Email body"
               />
@@ -130,13 +126,10 @@ export function EmailDetailPanel({ entry, isOpen, onClose }: EmailDetailPanelPro
 
             {/* PDF attachment */}
             {entry.pdfFilename && (
-              <>
-                <div className="border-t" />
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Paperclip className="size-4 shrink-0" />
-                  <span>{entry.pdfFilename}</span>
-                </div>
-              </>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Paperclip className="size-4 shrink-0" />
+                <span>{entry.pdfFilename}</span>
+              </div>
             )}
           </div>
         </div>

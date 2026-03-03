@@ -10,7 +10,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { FileArrowDown, Bed } from "@phosphor-icons/react"
+import { FileArrowDown, PaperPlaneTilt, Bed } from "@phosphor-icons/react"
 
 export interface ModalStay {
   _id: string
@@ -28,6 +28,7 @@ interface StaySelectionModalProps {
   stays: ModalStay[]
   onGeneratePDF: (selectedStays: ModalStay[]) => void
   isGenerating: boolean
+  mode: "download" | "send"
 }
 
 const formatDate = (dateString?: string): string => {
@@ -62,6 +63,7 @@ export function StaySelectionModal({
   stays,
   onGeneratePDF,
   isGenerating,
+  mode,
 }: StaySelectionModalProps) {
   const [selectedStays, setSelectedStays] = useState<Set<string>>(new Set())
 
@@ -99,7 +101,7 @@ export function StaySelectionModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Generate confirmation PDF</DialogTitle>
+          <DialogTitle>{mode === "download" ? "Download confirmation" : "Send confirmation"}</DialogTitle>
           <DialogDescription>
             Select the stays to include.
           </DialogDescription>
@@ -175,8 +177,14 @@ export function StaySelectionModal({
             disabled={selectedStays.size === 0 || isGenerating}
             size="sm"
           >
-            <FileArrowDown className="size-4" />
-            {isGenerating ? "Generating…" : "Generate PDF"}
+            {mode === "download" ? (
+              <FileArrowDown className="size-4" />
+            ) : (
+              <PaperPlaneTilt className="size-4" />
+            )}
+            {isGenerating
+              ? (mode === "download" ? "Generating…" : "Sending…")
+              : (mode === "download" ? "Download Confirmation PDF" : "Send Confirmation PDF")}
           </Button>
         </DialogFooter>
       </DialogContent>
