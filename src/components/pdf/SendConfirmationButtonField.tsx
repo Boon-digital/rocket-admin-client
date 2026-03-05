@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { PaperPlaneTilt, Check } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { fetchContactById } from "@/features/contacts/api"
 import { fetchCompanyById } from "@/features/companies/api"
 import { useAuthStore } from "@/stores/authStore"
@@ -22,7 +22,6 @@ export function SendConfirmationButtonField({
   const [showModal, setShowModal] = useState(false)
   const [bookerData, setBookerData] = useState<any>(null)
   const [companyData, setCompanyData] = useState<any>(null)
-  const [justSent, setJustSent] = useState(false)
 
   const bookerId =
     typeof allData.bookerId === "object"
@@ -36,6 +35,22 @@ export function SendConfirmationButtonField({
 
   const bookingId =
     typeof allData._id === "object" ? (allData._id as any).$oid : String(allData._id)
+
+  const { data: logsData } = useQuery({
+    queryKey: ["email-logs", bookingId],
+    queryFn: async () => {
+      console.log("[email-logs] fetching for bookingId:", bookingId)
+      const res = await fetch(`/api/v1/email/logs?bookingId=${bookingId}`, {
+        credentials: "include",
+      })
+      const json = await res.json()
+      console.log("[email-logs] response:", json)
+      return json
+    },
+    enabled: !!bookingId,
+  })
+  const emailLogs: any[] = logsData?.data ?? []
+  console.log("[email-logs] emailLogs:", emailLogs, "logsData:", logsData)
 
   useEffect(() => {
     if (!bookerId) {
@@ -126,11 +141,11 @@ export function SendConfirmationButtonField({
         throw new Error(err?.error ?? "Failed to send email")
       }
 
-      setJustSent(true)
       toast.success("Confirmation sent.")
       // Server already patched confirmationSent + confirmationSentAt — refetch both list and detail
       await queryClient.invalidateQueries({ queryKey: ["bookings"] })
       await queryClient.invalidateQueries({ queryKey: ["bookings", "detail", bookingId] })
+      await queryClient.invalidateQueries({ queryKey: ["email-logs", bookingId] })
     } catch (err: any) {
       console.error("[send-confirmation] Error:", err)
       toast.error(err?.message ?? "Failed to send confirmation email.")
@@ -139,38 +154,49 @@ export function SendConfirmationButtonField({
     }
   }
 
-  const isSent = allData.confirmationSent || justSent
-
-const sentAtRaw = allData.confirmationSentAt?.$date ?? allData.confirmationSentAt
-  const sentAtDate = sentAtRaw ? new Date(sentAtRaw) : null
-  const sentAt = sentAtDate && !isNaN(sentAtDate.getTime())
-    ? sentAtDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-    : null
-
   return (
-    <div className="pt-2">
-      {isSent ? (
-        <div className="flex flex-col gap-0.5 px-3 py-2 text-sm text-green-700 dark:text-green-400 bg-sidebar rounded-md">
-          <div className="flex items-center gap-2">
-            <Check className="size-4 shrink-0" />
-            Confirmation sent
-          </div>
-          {sentAt && (
-            <span className="text-xs text-muted-foreground pl-6">{sentAt}</span>
+    <div className="flex flex-col gap-2 pt-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => setShowModal(true)}
+        disabled={isSending}
+        type="button"
+      >
+        <PaperPlaneTilt className="size-4 mr-2" />
+        {isSending ? "Sending…" : "Send"}
+      </Button>
+
+      {(emailLogs.length > 0 || allData.confirmationSent) && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground font-medium">Previously sent</span>
+
+          {emailLogs.length === 0 && allData.confirmationSent && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Check className="size-3 shrink-0 text-green-600" />
+              <span>Sent (date unknown)</span>
+            </div>
           )}
+
+          {emailLogs.map((log: any) => {
+            const date = new Date(log.sentAt).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+            return (
+              <div
+                key={log._id?.$oid ?? log._id}
+                className="flex items-center gap-2 text-xs text-muted-foreground"
+              >
+                <Check className="size-3 shrink-0 text-green-600" />
+                <span>{date}</span>
+                {log.sentBy && <span className="truncate">— {log.sentBy}</span>}
+              </div>
+            )
+          })}
         </div>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => setShowModal(true)}
-          disabled={isSending}
-          type="button"
-        >
-          <PaperPlaneTilt className="size-4 mr-2" />
-          {isSending ? "Sending…" : "Send"}
-        </Button>
       )}
 
       <StaySelectionModal

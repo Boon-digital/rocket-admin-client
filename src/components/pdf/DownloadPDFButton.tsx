@@ -6,8 +6,6 @@ import { fetchCompanyById } from "@/features/companies/api"
 import { fetchContactById } from "@/features/contacts/api"
 import { StaySelectionModal, type ModalStay } from "./StaySelectionModal"
 import { generateConfirmationPDFBlob } from "./generatePDF"
-import { fileStorage, type UploadedFile } from "@/lib/file-storage"
-
 interface BookingData {
   _id: string
   confirmationNo?: string
@@ -25,36 +23,10 @@ interface BookingData {
 interface DownloadPDFButtonProps {
   bookingData: BookingData
   staySummaries: ModalStay[]
-  documents?: UploadedFile[]
+  documents?: unknown[]
   isDirty?: boolean
 }
 
-async function uploadPDFToDocuments(
-  blob: Blob,
-  filename: string,
-  bookingId: string,
-  existingDocuments: UploadedFile[]
-): Promise<void> {
-  try {
-    const file = new File([blob], filename, { type: "application/pdf" })
-    const uploaded = await fileStorage.upload(file)
-
-    const updatedDocuments = [...existingDocuments, uploaded]
-
-    const response = await fetch(`/api/v1/bookings/${bookingId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ documents: updatedDocuments }),
-    })
-
-    if (!response.ok) {
-      console.error("[pdf] Failed to patch booking documents:", await response.text())
-    }
-  } catch (err) {
-    console.error("[pdf] Error uploading PDF to documents:", err)
-  }
-}
 
 export function DownloadPDFButton({
   bookingData,
@@ -111,9 +83,6 @@ export function DownloadPDFButton({
       link.download = filename
       link.click()
       URL.revokeObjectURL(url)
-
-      // Upload to Vercel Blob and save to booking documents (fire-and-forget)
-      uploadPDFToDocuments(blob, filename, bookingData._id, documents)
     } catch (error) {
       console.error("Error generating PDF:", error)
       alert("Failed to generate PDF. Please try again.")
