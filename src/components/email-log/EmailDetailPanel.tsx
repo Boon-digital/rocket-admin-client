@@ -1,6 +1,17 @@
-import { useRef, useEffect } from 'react'
-import { X, Paperclip } from '@phosphor-icons/react'
+import { useRef, useEffect, useState } from 'react'
+import { X, Paperclip, ArrowSquareOut, FilePdf } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
+
+async function openPresigned(url: string) {
+  const params = new URLSearchParams({ key: url })
+  const res = await fetch(`/api/v1/documents/presign?${params}`, { credentials: 'include' })
+  if (!res.ok) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    return
+  }
+  const data = await res.json()
+  window.open(data.url, '_blank', 'noopener,noreferrer')
+}
 
 export interface EmailLogEntry {
   _id: any
@@ -14,6 +25,7 @@ export interface EmailLogEntry {
   resendId?: string
   html?: string
   pdfFilename?: string | null
+  pdfUrl?: string | null
 }
 
 interface EmailDetailPanelProps {
@@ -47,6 +59,15 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
 
 export function EmailDetailPanel({ entry, isOpen, onClose }: EmailDetailPanelProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'))
+
+  useEffect(() => {
+    const observer = new MutationObserver(() =>
+      setIsDark(document.documentElement.classList.contains('dark'))
+    )
+    observer.observe(document.documentElement, { attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     const iframe = iframeRef.current
@@ -108,11 +129,31 @@ export function EmailDetailPanel({ entry, isOpen, onClose }: EmailDetailPanelPro
               )}
             </div>
 
+            {/* PDF attachment */}
+            {entry.pdfFilename && (
+              entry.pdfUrl ? (
+                <button
+                  type="button"
+                  onClick={() => openPresigned(entry.pdfUrl!)}
+                  className="flex items-center gap-2 text-sm rounded-md px-2 py-1.5 -mx-2 hover:bg-accent cursor-pointer w-full text-left"
+                >
+                  <FilePdf className="size-4 shrink-0 text-muted-foreground" weight="light" />
+                  <span className="truncate">{entry.pdfFilename}</span>
+                  <ArrowSquareOut className="size-4 shrink-0 text-muted-foreground ml-auto" weight="light" />
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Paperclip className="size-4 shrink-0" />
+                  <span>{entry.pdfFilename}</span>
+                </div>
+              )
+            )}
+
             {/* HTML body */}
             {entry.html ? (
               <iframe
                 ref={iframeRef}
-                srcDoc={`<style>@media(prefers-color-scheme:dark){html{filter:invert(1) hue-rotate(180deg)}img,video{filter:invert(1) hue-rotate(180deg)}}</style>${entry.html}`}
+                srcDoc={isDark ? `<style>html{filter:invert(1) hue-rotate(180deg)}img,video{filter:invert(1) hue-rotate(180deg)}</style>${entry.html}` : entry.html}
                 sandbox=""
                 className="w-full min-h-40"
                 style={{ height: '400px' }}
@@ -122,14 +163,6 @@ export function EmailDetailPanel({ entry, isOpen, onClose }: EmailDetailPanelPro
               <p className="text-sm text-muted-foreground italic">
                 HTML body not available for this entry.
               </p>
-            )}
-
-            {/* PDF attachment */}
-            {entry.pdfFilename && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Paperclip className="size-4 shrink-0" />
-                <span>{entry.pdfFilename}</span>
-              </div>
             )}
           </div>
         </div>

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { ArrowUp, ArrowDown, ArrowsDownUp, DownloadSimple } from '@phosphor-icons/react'
+import { ArrowUp, ArrowDown, ArrowsDownUp, ArrowSquareOut } from '@phosphor-icons/react'
 
 export const Route = createFileRoute('/_authenticated/documents')({
   component: DocumentsPage,
@@ -258,7 +258,7 @@ function DocumentsPage() {
                           disabled={downloading === doc.id}
                           title="Download"
                         >
-                          <DownloadSimple className="size-4" />
+                          <ArrowSquareOut className="size-4" />
                         </Button>
                       </TableCell>
                     </TableRow>

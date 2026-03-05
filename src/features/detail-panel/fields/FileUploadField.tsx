@@ -10,7 +10,7 @@ async function openPresigned(url: string) {
   const data = await res.json()
   window.open(data.url, '_blank', 'noopener,noreferrer')
 }
-import { Upload, X, File, Download } from '@phosphor-icons/react'
+import { Upload, X, File, ArrowSquareOut } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { fileStorage, type UploadedFile } from '@/lib/file-storage'
 import type { FieldRendererProps } from '../types'
@@ -80,7 +80,7 @@ export function FileUploadField({ field, value, onChange, mode, error, onRequest
                   <File className="h-4 w-4 shrink-0 text-muted-foreground" weight="light" />
                   <span className="truncate">{f.name}</span>
                   <span className="text-muted-foreground shrink-0">({formatFileSize(f.size)})</span>
-                  <Download className="h-4 w-4 shrink-0 text-muted-foreground ml-auto" weight="light" />
+                  <ArrowSquareOut className="h-4 w-4 shrink-0 text-muted-foreground ml-auto" weight="light" />
                 </button>
               </li>
             ))}
