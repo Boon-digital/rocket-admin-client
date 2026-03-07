@@ -7,7 +7,8 @@ import { fetchContactById } from "@/features/contacts/api"
 import { fetchCompanyById } from "@/features/companies/api"
 import { useAuthStore } from "@/stores/authStore"
 import type { FieldRendererProps } from "@/features/detail-panel/types"
-import { StaySelectionModal, type ModalStay } from "./StaySelectionModal"
+import type { ModalStay } from "./StaySelectionModal"
+import { ComposeEmailDialog, type ComposeEmailValues } from "./ComposeEmailDialog"
 import { generateConfirmationPDFBase64 } from "./generatePDF"
 
 export function SendConfirmationButtonField({
@@ -19,7 +20,7 @@ export function SendConfirmationButtonField({
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const [isSending, setIsSending] = useState(false)
-  const [showModal, setShowModal] = useState(false)
+  const [showCompose, setShowCompose] = useState(false)
   const [bookerData, setBookerData] = useState<any>(null)
   const [companyData, setCompanyData] = useState<any>(null)
 
@@ -39,37 +40,23 @@ export function SendConfirmationButtonField({
   const { data: logsData } = useQuery({
     queryKey: ["email-logs", bookingId],
     queryFn: async () => {
-      console.log("[email-logs] fetching for bookingId:", bookingId)
       const res = await fetch(`/api/v1/email/logs?bookingId=${bookingId}`, {
         credentials: "include",
       })
-      const json = await res.json()
-      console.log("[email-logs] response:", json)
-      return json
+      return res.json()
     },
     enabled: !!bookingId,
   })
   const emailLogs: any[] = logsData?.data ?? []
-  console.log("[email-logs] emailLogs:", emailLogs, "logsData:", logsData)
 
   useEffect(() => {
-    if (!bookerId) {
-      setBookerData(null)
-      return
-    }
-    fetchContactById(bookerId)
-      .then((c) => setBookerData(c))
-      .catch(() => setBookerData(null))
+    if (!bookerId) { setBookerData(null); return }
+    fetchContactById(bookerId).then((c) => setBookerData(c)).catch(() => setBookerData(null))
   }, [bookerId])
 
   useEffect(() => {
-    if (!companyId) {
-      setCompanyData(null)
-      return
-    }
-    fetchCompanyById(companyId)
-      .then((c) => setCompanyData(c))
-      .catch(() => setCompanyData(null))
+    if (!companyId) { setCompanyData(null); return }
+    fetchCompanyById(companyId).then((c) => setCompanyData(c)).catch(() => setCompanyData(null))
   }, [companyId])
 
   const staySummaries: ModalStay[] = (allData.staySummaries ?? []).map((s: any) => ({
@@ -80,18 +67,28 @@ export function SendConfirmationButtonField({
     guestCount: s.guestNames?.length ?? 0,
   }))
 
-  const handleSend = async (selectedSummaries: ModalStay[]) => {
+  const bookerEmail = bookerData?.general?.email ?? ""
+  const firstName = bookerData?.general?.firstName ?? ""
+  const lastName = bookerData?.general?.lastName ?? ""
+  const bookerFullName = `${firstName} ${lastName}`.trim()
+
+  const handleSend = async (values: ComposeEmailValues) => {
     setIsSending(true)
-    setShowModal(false)
+    setShowCompose(false)
 
     try {
-      const firstName = bookerData?.general?.firstName ?? ""
-      const lastName = bookerData?.general?.lastName ?? ""
-      const bookerFullName = `${firstName} ${lastName}`.trim()
-      const bookerEmail = bookerData?.general?.email ?? ""
+      if (!values.to) {
+        toast.error("No recipient email address specified.")
+        return
+      }
 
-      if (!bookerEmail) {
-        toast.error("No email address found for the booker.")
+      // Filter stays to only the selected one
+      const selectedSummaries = staySummaries.filter((s) =>
+        values.selectedStayIds.includes(s._id)
+      )
+
+      if (selectedSummaries.length === 0) {
+        toast.error("No stay selected.")
         return
       }
 
@@ -120,19 +117,29 @@ export function SendConfirmationButtonField({
         logoUrl,
       )
 
+      // Parse comma-separated cc/bcc into arrays
+      const parseCsv = (s: string) =>
+        s.split(",").map((e) => e.trim()).filter(Boolean)
+
       const response = await fetch("/api/v1/email/send-confirmation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           bookingId,
-          to: bookerEmail,
+          from: values.from,
+          to: values.to,
+          cc: parseCsv(values.cc),
+          bcc: parseCsv(values.bcc),
+          subject: values.subject,
+          bodyText: values.bodyText,
           bookerName: bookerFullName,
           confirmationNo: allData.confirmationNo ?? "",
-          staySummaries: allData.staySummaries ?? [],
+          staySummaries: selectedSummaries,
           pdfBase64: base64,
           pdfFilename: filename,
           sentBy: user?.email ?? user?.name ?? "unknown",
+          senderName: user?.name ?? "CMP Team",
         }),
       })
 
@@ -142,7 +149,6 @@ export function SendConfirmationButtonField({
       }
 
       toast.success("Confirmation sent.")
-      // Server already patched confirmationSent + confirmationSentAt — refetch both list and detail
       await queryClient.invalidateQueries({ queryKey: ["bookings"] })
       await queryClient.invalidateQueries({ queryKey: ["bookings", "detail", bookingId] })
       await queryClient.invalidateQueries({ queryKey: ["email-logs", bookingId] })
@@ -160,7 +166,7 @@ export function SendConfirmationButtonField({
         variant="outline"
         size="sm"
         className="w-full"
-        onClick={() => setShowModal(true)}
+        onClick={() => setShowCompose(true)}
         disabled={isSending}
         type="button"
       >
@@ -188,24 +194,29 @@ export function SendConfirmationButtonField({
             return (
               <div
                 key={log._id?.$oid ?? log._id}
-                className="flex items-center gap-2 text-xs text-muted-foreground"
+                className="flex items-start gap-2 text-xs text-muted-foreground"
               >
-                <Check className="size-3 shrink-0 text-green-600" />
-                <span>{date}</span>
-                {log.sentBy && <span className="truncate">— {log.sentBy}</span>}
+                <Check className="size-3 shrink-0 text-green-600 self-center" />
+                <div className="flex flex-col">
+                  <span>{date}</span>
+                  {log.sentBy && <span className="truncate">{log.sentBy}</span>}
+                </div>
               </div>
             )
           })}
         </div>
       )}
 
-      <StaySelectionModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
+      <ComposeEmailDialog
+        isOpen={showCompose}
+        onClose={() => setShowCompose(false)}
         stays={staySummaries}
-        onGeneratePDF={handleSend}
-        isGenerating={isSending}
-        mode="send"
+        bookerEmail={bookerEmail}
+        bookerName={bookerFullName}
+        confirmationNo={allData.confirmationNo ?? ""}
+        senderName={user?.name ?? "CMP Team"}
+        onSend={handleSend}
+        isSending={isSending}
       />
     </div>
   )
