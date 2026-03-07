@@ -17,9 +17,9 @@ import type { ModalStay } from "./StaySelectionModal"
 // ─── Configurable from address options ────────────────────────────────────────
 // To add or remove options, edit this array.
 const FROM_OPTIONS = [
-  { value: "noreply@developdigital.nl", label: "noreply@developdigital.nl" },
-  { value: "info@developdigital.nl", label: "info@developdigital.nl" },
-  { value: "invoice@developdigital.nl", label: "invoice@developdigital.nl" },
+  { value: "noreply@develop-digital.nl", label: "noreply@develop-digital.nl" },
+  { value: "info@develop-digital.nl", label: "info@develop-digital.nl" },
+  { value: "invoice@develop-digital.nl", label: "invoice@develop-digital.nl" },
 ]
 // ─────────────────────────────────────────────────────────────────────────────
 
