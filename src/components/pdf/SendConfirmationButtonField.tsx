@@ -67,9 +67,7 @@ export function SendConfirmationButtonField({
     guestCount: s.guestNames?.length ?? 0,
   }))
 
-  // During testing the to field defaults to ruben@boondigital.nl.
-  // Once ready for production, change this to: bookerData?.general?.email ?? ""
-  const bookerEmail = "ruben@boondigital.nl"
+  const bookerEmail = bookerData?.general?.email ?? ""
   const firstName = bookerData?.general?.firstName ?? ""
   const lastName = bookerData?.general?.lastName ?? ""
   const bookerFullName = `${firstName} ${lastName}`.trim()
