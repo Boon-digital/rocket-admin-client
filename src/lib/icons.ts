@@ -27,6 +27,7 @@ import {
   Circle,
   CircleDashed,
   CircleNotch,
+  Coins,
   Copy,
   CreditCard,
   CurrencyDollar,
@@ -162,6 +163,7 @@ export const iconMap: Record<string, Icon> = {
   House,
 
   // Finance
+  Coins,
   CurrencyDollar,
   CurrencyEur: CurrencyDollar,
   CircleDollarSign: CurrencyDollar,
@@ -244,6 +246,7 @@ export {
   Circle,
   CircleDashed,
   CircleNotch,
+  Coins,
   Copy,
   CreditCard,
   CurrencyDollar,

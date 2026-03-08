@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -10,6 +11,21 @@ import type { FieldRendererProps } from '../types'
 import { isFieldReadOnly } from '../utils'
 import { FieldLabel } from './FieldLabel'
 import { CopyableValue } from './CopyableValue'
+
+function formatAmount(value: string): string {
+  if (!value && value !== '0') return ''
+  const num = parseFloat(String(value).replace(/,/g, ''))
+  if (isNaN(num)) return value
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num)
+}
+
+function parseAmount(formatted: string): string {
+  // Strip thousands commas, keep decimal dot
+  return formatted.replace(/,/g, '')
+}
 
 const CURRENCIES = [
   { value: 'EUR', label: 'EUR' },
@@ -56,12 +72,19 @@ export function CurrencyField({ field, value, onChange, onChangeMulti, mode, err
   const amount: string = isFlat ? String((allData as any)?.[amountKey] ?? '') : (value?.amount ?? '')
   const currency: string = isFlat ? String((allData as any)?.[currencyKey] ?? 'EUR') : (value?.currency ?? 'EUR')
 
+  const [inputValue, setInputValue] = useState(() => formatAmount(amount))
+
+  // Sync formatted display when external value changes
+  useEffect(() => {
+    setInputValue(formatAmount(amount))
+  }, [amount])
+
   const handleAmountChange = (newAmount: string) => {
     if (isFlat) {
       onChangeMulti?.({ [amountKey!]: newAmount, [currencyKey!]: currency })
     } else {
       onChange({ amount: newAmount, currency })
-    }2
+    }
   }
 
   const handleCurrencyChange = (newCurrency: string) => {
@@ -73,7 +96,7 @@ export function CurrencyField({ field, value, onChange, onChangeMulti, mode, err
   }
 
   if (readOnly) {
-    const displayValue = amount ? `${amount} ${currency}` : '-'
+    const displayValue = amount ? `${formatAmount(amount)} ${currency}` : '-'
     return (
       <div className="space-y-2">
         <FieldLabel field={field} />
@@ -91,9 +114,14 @@ export function CurrencyField({ field, value, onChange, onChangeMulti, mode, err
         <Input
           id={field.key}
           type="text"
-          value={amount}
-          onChange={(e) => handleAmountChange(e.target.value)}
-          placeholder={field.placeholder || 'Enter amount'}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onBlur={() => {
+            const raw = parseAmount(inputValue)
+            handleAmountChange(raw)
+            setInputValue(formatAmount(raw))
+          }}
+          placeholder={field.placeholder || '0.00'}
           className={`flex-1 ${error ? 'border-destructive' : ''}`}
         />
         <Select value={currency} onValueChange={handleCurrencyChange}>

@@ -196,7 +196,7 @@ export function createTextColumn<TData>({
       const displayValue = value || fallback
 
       return (
-        <div className={`truncate ${bold ? 'font-medium' : ''}`}>
+        <div className={`truncate ${bold ? 'font-medium' : ''}`} title={String(displayValue)}>
           {displayValue}
         </div>
       )

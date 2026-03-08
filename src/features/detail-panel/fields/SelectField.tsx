@@ -95,10 +95,10 @@ export function SelectField({ field, value, onChange, mode, error }: FieldRender
         {field.required && <span className="text-destructive ml-1">*</span>}
       </FieldLabel>
       <Select value={value || ''} onValueChange={handleSelectChange}>
-        <SelectTrigger className={error ? 'border-destructive' : ''}>
+        <SelectTrigger className={`w-full ${error ? 'border-destructive' : ''}`}>
           <SelectValue placeholder={field.placeholder || 'Select an option'} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="w-[var(--radix-select-trigger-width)]">
           {field.options
             ?.filter((option) => option.value !== '')
             .map((option) => (

@@ -28,7 +28,7 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
   }
 
   const [mode, setMode] = useState<PanelMode>(getInitialMode())
-  const [formData, setFormData] = useState<any>(() => data ?? {})
+  const [formData, setFormData] = useState<any>(() => data ? data : generateDefaultData(config))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isDirty, setIsDirty] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,11 +36,12 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
   // Update form data when data prop changes
   useEffect(() => {
     if (data) {
-      setFormData(data)
+      const isCreate = (initialMode || defaultMode) === 'create'
+      setFormData(isCreate ? { ...generateDefaultData(config), ...data } : data)
       setMode(initialMode || defaultMode)
       setIsDirty(false)
     } else {
-      setFormData({})
+      setFormData(generateDefaultData(config))
       setMode('create')
       setIsDirty(false)
     }
@@ -212,7 +213,14 @@ export const DetailPanel = forwardRef(function DetailPanel<T>({
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background ">
         <div className="flex items-center justify-between p-6">
-          <h2 className="text-lg font-semibold">{getTitle()}</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold">
+              {mode === 'view' && config.headerTitle && formData
+                ? config.headerTitle(formData)
+                : getTitle()}
+            </h2>
+            {mode === 'view' && config.headerBadge && formData && config.headerBadge(formData)}
+          </div>
           <div className="flex items-center gap-2">
             {mode === 'view' && onDelete && config.canDelete !== false && data && (
               <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(formData)}>

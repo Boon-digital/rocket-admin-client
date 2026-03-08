@@ -31,6 +31,7 @@ const config = defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@boon-digital/rocket-admin-config': fileURLToPath(new URL('../config', import.meta.url)),
     },
   },
   plugins: [

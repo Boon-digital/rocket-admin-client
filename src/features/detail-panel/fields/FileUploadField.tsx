@@ -10,7 +10,7 @@ async function openPresigned(url: string) {
   const data = await res.json()
   window.open(data.url, '_blank', 'noopener,noreferrer')
 }
-import { Upload, X, File, ArrowSquareOut } from '@phosphor-icons/react'
+import { Upload, Trash, File, ArrowSquareOut } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { fileStorage, type UploadedFile } from '@/lib/file-storage'
 import type { FieldRendererProps } from '../types'
@@ -28,6 +28,7 @@ export function FileUploadField({ field, value, onChange, mode, error, onRequest
   const files: UploadedFile[] = Array.isArray(value) ? value : []
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const maxFiles = field.maxFiles ?? 10
   const maxFileSize = field.maxFileSize ?? 10 * 1024 * 1024 // 10MB default
@@ -50,11 +51,26 @@ export function FileUploadField({ field, value, onChange, mode, error, onRequest
     }
   }, [files, onChange, onRequestSave, field.key, maxFiles, maxFileSize])
 
-  const removeFile = useCallback((id: string) => {
+  const removeFile = useCallback(async (id: string) => {
     const file = files.find((f) => f.id === id)
-    fileStorage.delete(id, file?.url)
-    onChange(files.filter((f) => f.id !== id))
-  }, [files, onChange])
+    if (!confirm(`Delete "${file?.name ?? 'this file'}"? This cannot be undone.`)) return
+
+    setDeletingId(id)
+    try {
+      const filtered = files.filter((f) => f.id !== id)
+      try {
+        await fileStorage.delete(id, file?.url)
+      } catch (err) {
+        console.error('[FileUploadField] storage delete failed:', err)
+      }
+      const saved = await onRequestSave?.({ [field.key]: filtered })
+      if (saved !== false) {
+        onChange(filtered)
+      }
+    } finally {
+      setDeletingId(null)
+    }
+  }, [files, onChange, onRequestSave, field.key])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -140,9 +156,11 @@ export function FileUploadField({ field, value, onChange, mode, error, onRequest
                 type="button"
                 variant="ghost"
                 size="icon-xs"
-                onClick={() => removeFile(f.id)}
+                onClick={() => { void removeFile(f.id) }}
+                disabled={deletingId === f.id}
+                className="text-destructive hover:text-destructive ml-auto shrink-0"
               >
-                <X className="h-3 w-3" weight="light" />
+                <Trash className="h-3 w-3" weight="light" />
               </Button>
             </li>
           ))}

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, useMemo } from 'react'
 import { PageHeader } from '@/components/PageHeader'
 import {
@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { ArrowUp, ArrowDown, ArrowsDownUp, ArrowSquareOut } from '@phosphor-icons/react'
+import { toast } from 'sonner'
+import { ArrowUp, ArrowDown, ArrowsDownUp, ArrowSquareOut, Trash } from '@phosphor-icons/react'
 
 export const Route = createFileRoute('/_authenticated/documents')({
   component: DocumentsPage,
@@ -26,8 +27,12 @@ interface DocumentRow {
   url: string
   uploadedAt: string
   uploadedBy?: string
-  bookingId: string
-  bookingConfirmationNo: string
+  source: 'booking' | 'stay'
+  bookingId?: string
+  bookingConfirmationNo?: string
+  stayId?: string
+  hotelName?: string
+  hotelConfirmationNo?: string
 }
 
 interface DocumentsResponse {
@@ -40,7 +45,7 @@ interface DocumentsResponse {
   }
 }
 
-type SortKey = 'name' | 'type' | 'bookingConfirmationNo' | 'uploadedBy' | 'uploadedAt'
+type SortKey = 'name' | 'type' | 'source' | 'uploadedBy' | 'uploadedAt'
 type SortDir = 'asc' | 'desc'
 
 async function fetchDocuments(): Promise<DocumentsResponse> {
@@ -49,6 +54,24 @@ async function fetchDocuments(): Promise<DocumentsResponse> {
   })
   if (!res.ok) throw new Error('Failed to fetch documents')
   return res.json()
+}
+
+async function deleteDocument(doc: DocumentRow): Promise<void> {
+  const res = await fetch('/api/v1/documents', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      docId: doc.id,
+      docUrl: doc.url,
+      entityType: doc.source === 'stay' ? 'stay' : 'booking',
+      entityId: doc.source === 'stay' ? doc.stayId! : doc.bookingId!,
+    }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error((data as any).error ?? 'Delete failed')
+  }
 }
 
 async function getPresignedUrl(url: string): Promise<string> {
@@ -102,10 +125,27 @@ function DocumentsPage() {
     queryFn: fetchDocuments,
   })
 
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey | null>('uploadedAt')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [downloading, setDownloading] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  const handleDelete = async (doc: DocumentRow) => {
+    if (!confirm(`Delete "${doc.name}"? This permanently removes the file and cannot be undone.`)) return
+    setDeleting(doc.id)
+    try {
+      await deleteDocument(doc)
+      await queryClient.invalidateQueries({ queryKey: ['documents'] })
+      toast.success('Document deleted')
+    } catch (err) {
+      console.error('[documents] delete error:', err)
+      toast.error((err as Error).message ?? 'Failed to delete document')
+    } finally {
+      setDeleting(null)
+    }
+  }
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -135,11 +175,17 @@ function DocumentsPage() {
 
     if (search.trim()) {
       const q = search.trim().toLowerCase()
-      rows = rows.filter(
-        (r) =>
-          r.name.toLowerCase().includes(q) ||
-          r.bookingConfirmationNo.toLowerCase().includes(q)
-      )
+      rows = rows.filter((r) => {
+        if (r.name.toLowerCase().includes(q)) return true
+        if (r.source === 'stay') {
+          return (
+            (r.hotelName ?? '').toLowerCase().includes(q) ||
+            (r.hotelConfirmationNo ?? '').toLowerCase().includes(q)
+          )
+        } else {
+          return (r.bookingConfirmationNo ?? '').toLowerCase().includes(q)
+        }
+      })
     }
 
     if (sortKey) {
@@ -172,7 +218,7 @@ function DocumentsPage() {
           {/* Toolbar */}
           <div className="flex items-center gap-3 mb-4">
             <Input
-              placeholder="Search filename or booking ref…"
+              placeholder="Search filename, booking ref, or hotel…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-sm"
@@ -197,11 +243,12 @@ function DocumentsPage() {
                         Type · Size <SortIcon column="type" sortKey={sortKey} sortDir={sortDir} />
                       </span>
                     </TableHead>
-                    <TableHead className={thClass} onClick={() => handleSort('bookingConfirmationNo')}>
+                    <TableHead className={thClass} onClick={() => handleSort('source')}>
                       <span className="flex items-center">
-                        Booking Ref <SortIcon column="bookingConfirmationNo" sortKey={sortKey} sortDir={sortDir} />
+                        Source <SortIcon column="source" sortKey={sortKey} sortDir={sortDir} />
                       </span>
                     </TableHead>
+                    <TableHead>Reference</TableHead>
                     <TableHead className={thClass} onClick={() => handleSort('uploadedBy')}>
                       <span className="flex items-center">
                         Uploaded by <SortIcon column="uploadedBy" sortKey={sortKey} sortDir={sortDir} />
@@ -218,7 +265,7 @@ function DocumentsPage() {
                 <TableBody>
                   {processed.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         {data.data.length === 0 ? 'No documents uploaded yet.' : 'No results match your search.'}
                       </TableCell>
                     </TableRow>
@@ -232,7 +279,26 @@ function DocumentsPage() {
                         {formatType(doc.type)} · {formatBytes(doc.size)}
                       </TableCell>
                       <TableCell>
-                        {doc.bookingId ? (
+                        {doc.source === 'stay' ? (
+                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                            Stay
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                            Booking
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {doc.source === 'stay' && doc.stayId ? (
+                          <Link
+                            to="/stays"
+                            search={{ id: doc.stayId }}
+                            className="text-primary underline underline-offset-2 hover:opacity-80"
+                          >
+                            {doc.hotelName || doc.stayId}
+                          </Link>
+                        ) : doc.bookingId ? (
                           <Link
                             to="/bookings"
                             search={{ id: doc.bookingId }}
@@ -259,6 +325,16 @@ function DocumentsPage() {
                           title="Download"
                         >
                           <ArrowSquareOut className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { void handleDelete(doc) }}
+                          disabled={deleting === doc.id}
+                          title="Delete"
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash className="size-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
