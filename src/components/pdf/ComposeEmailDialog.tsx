@@ -17,10 +17,13 @@ import type { ModalStay } from "./StaySelectionModal"
 // ─── Configurable from address options ────────────────────────────────────────
 // To add or remove options, edit this array.
 const FROM_OPTIONS = [
+  { value: "reservations@corporatemeetingpartner.com", label: "reservations@corporatemeetingpartner.com" },
   { value: "noreply@corporatemeetingpartner.com", label: "noreply@corporatemeetingpartner.com" },
   { value: "info@corporatemeetingpartner.com", label: "info@corporatemeetingpartner.com" },
   { value: "invoice@corporatemeetingpartner.com", label: "invoice@corporatemeetingpartner.com" },
 ]
+
+const DEFAULT_BCC = "donotreply@corporatemeetingpartner.com"
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ComposeEmailValues {
@@ -100,7 +103,7 @@ export function ComposeEmailDialog({
   const [from, setFrom] = useState(FROM_OPTIONS[0].value)
   const [to, setTo] = useState("")
   const [cc, setCc] = useState("")
-  const [bcc, setBcc] = useState("")
+  const [bcc, setBcc] = useState(DEFAULT_BCC)
   const [subject, setSubject] = useState("")
   const [bodyText, setBodyText] = useState("")
   const [selectedStayIds, setSelectedStayIds] = useState<Set<string>>(new Set())
@@ -137,7 +140,7 @@ export function ComposeEmailDialog({
     setFrom(FROM_OPTIONS[0].value)
     setTo(bookerEmail)
     setCc("")
-    setBcc("")
+    setBcc(DEFAULT_BCC)
     setSubject(`Your hotel confirmation: ${confirmationNo}`)
 
     const allIds = new Set(stays.map((s) => s._id))
