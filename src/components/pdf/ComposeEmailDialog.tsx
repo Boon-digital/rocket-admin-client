@@ -17,9 +17,9 @@ import type { ModalStay } from "./StaySelectionModal"
 // ─── Configurable from address options ────────────────────────────────────────
 // To add or remove options, edit this array.
 const FROM_OPTIONS = [
-  { value: "noreply@miceflow.com", label: "noreply@miceflow.com" },
-  { value: "info@miceflow.com", label: "info@miceflow.com" },
-  { value: "invoice@miceflow.com", label: "invoice@miceflow.com" },
+  { value: "noreply@corporatemeetingpartner.com", label: "noreply@corporatemeetingpartner.com" },
+  { value: "info@corporatemeetingpartner.com", label: "info@corporatemeetingpartner.com" },
+  { value: "invoice@corporatemeetingpartner.com", label: "invoice@corporatemeetingpartner.com" },
 ]
 // ─────────────────────────────────────────────────────────────────────────────
 

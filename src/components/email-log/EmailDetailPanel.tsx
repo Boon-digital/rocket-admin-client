@@ -111,7 +111,7 @@ export function EmailDetailPanel({ entry, isOpen, onClose }: EmailDetailPanelPro
 
             {/* Metadata */}
             <div className="space-y-1.5">
-              <MetaRow label="From">donotreply@miceflow.com</MetaRow>
+              <MetaRow label="From">donotreply@corporatemeetingpartner.com</MetaRow>
               <MetaRow label="To">{entry.to}</MetaRow>
               <MetaRow label="Sent">{formatDateTime(entry.sentAt)}</MetaRow>
               <MetaRow label="By">{entry.sentBy}</MetaRow>
